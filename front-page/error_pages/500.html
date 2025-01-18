@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
+        <!--[if lt IE 9]><meta http-equiv='X-UA-Compatible' content='IE=edge'><![endif]-->
+        <style>
+        html {
+            height:                         100%;
+            -webkit-text-size-adjust:       100%;
+            -ms-text-size-adjust:           100%;
+            font-size:                      10px;
+            -webkit-tap-highlight-color:    transparent;
+        }
+        
+        *, :after, :before {
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing:    border-box;
+            box-sizing:         border-box;
+        }
+        
+        body {
+            height:             100%;
+            margin:             0;
+            font-size:          14px;
+            line-height:        1.42857143;
+            color:              #141414;
+            background-color:   #202020;
+            display:            -webkit-box;
+            display:             -moz-box;
+            display:            -ms-flexbox;
+            display:            -webkit-flex;
+            display:            flex;
+            flex-wrap: nowrap;
+            flex-direction: row;
+            justify-content: center;
+            font-family: Arial;
+            align-items: center;
+            overflow: hidden;
+          -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none; /* Safari */
+             -khtml-user-select: none; /* Konqueror HTML */
+               -moz-user-select: none; /* Firefox */
+                -ms-user-select: none; /* Internet Explorer/Edge */
+                    user-select: none;
+        }
+
+        h3 {
+            font-family:    inherit;
+            font-weight:    500;
+            line-height:    1.1;
+            color:          inherit;
+            margin-top:     0;
+            margin-bottom:  20px;
+            font-size:      24px;
+        }
+
+        .error-block {
+            width:                  300px;
+            background-color:       #5c5c5c;
+            padding:                25px 27px;
+            -moz-border-radius:     0;
+            -webkit-border-radius:  0;
+            border-radius:          0;
+            position:      relative;
+        }
+        
+        .ma {
+            font-weight: bold;
+            font-size: 32px;
+            position: absolute;
+            bottom: 0;
+            right: 8px;
+            opacity: 0.2;
+        }
+        </style>
+        <title>500 Internal server error</title>
+    </head>
+    <body>
+        <div class='error-block'>
+            <h3>Error 500</h3>
+             <div style='margin-bottom: 5px'>Internal server error</div>
+             <div>Try again later...<div>
+             <div class="ma">MA</div>
+        </div>
+    </body>
+</html>

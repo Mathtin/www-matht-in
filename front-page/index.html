@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="theme-color" content="#FFFFFF">
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <title>Welcome!</title>
+        <link rel="icon" type="img/ico" href="/favicon.ico">
+        <style>
+
+body, html{
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+}
+
+body {
+    display: flex;
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    font-family: Arial, Helvetica, sans-serif;
+    align-items: stretch;
+    overflow: hidden;
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none;
+    --main-font-color: white;
+    --main-color: black;
+    --main-font-color-inv: #454545;
+    --main-color-inv: white;
+    background-color: black;
+    color: #F5F5F5;
+}
+
+div {
+    white-space: nowrap;
+    border: 0px;
+}
+
+img, canvas {
+    display: block;
+}
+
+a {
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+
+#content {
+    display: flex;
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    flex: 1;
+    flex-direction: row;
+    justify-content: center;
+    z-index: 0;
+}
+
+#content-body {
+    display: flex;
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    flex-direction: column;
+    color: rgba(0, 0, 0, 0);
+    align-items: stretch;
+}
+
+#content-body:hover {
+    color: #505050;
+    position: relative; 
+}
+
+#caps-warn {
+    position: absolute; 
+    display: flex;
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    flex-direction: column;
+    justify-content: center;
+    flex-wrap: nowrap;
+    width: 100%;
+    top: -32pt;
+}
+
+#js-off {
+    text-align: center;
+    padding: 1pt;
+}
+
+#wasm-off {
+    text-align: center;
+    padding: 1pt;
+}
+
+#content-title {
+    box-sizing: border-box;
+    font-weight: bold;
+    padding: 4pt;
+    border: 8pt white solid;
+    text-align: center;
+    font-weight: bold;
+    font-size: 96pt;
+    cursor: pointer;
+    color: white;
+}
+
+#content-title-inner-clicked {
+    border: 2.3pt solid transparent;
+}
+
+#content-title-inner-clicked:active {
+    border: 2.3pt white solid;
+}
+
+#content-text {
+    box-sizing: border-box;
+    flex: 1;
+    padding: 8pt;
+    overflow: auto;
+    white-space: normal;
+    font-size: 18pt;
+    color: #cecece;
+}
+
+#mailto:hover {
+    text-decoration-line: underline;
+}
+
+.align-center {
+    align-items: center !important;
+}
+
+        </style>
+    </head>
+    <body class="dark">
+        <div class="align-center" id="content">
+            <div id="content-body">
+                <div id="caps-warn">
+                    <div id="js-off">JavaScript disabled</div>
+                    <div id="wasm-off">WebAssembly disabled</div>
+                </div>
+                <div id="content-title">
+                    <div id="content-title-inner-clicked">
+                        <span>MATHTIN</span>
+                    </div>
+                </div>
+                <div id="content-text">
+                        <span>contact <a id="mailto" href="mailto:me@matht.in">me@matht.in</a></span>
+                </div>
+            </div>
+        </div>
+        <script>
+            document.getElementById("js-off").setAttribute("style", "visibility: hidden");
+        </script>
+        <script type="module">
+            import init, { start } from "./shards_browser.js";
+
+            init().then(() => {
+                document.getElementById("wasm-off").setAttribute("style", "visibility: hidden");
+                document.getElementById("content-title").onclick = start;
+            });
+        </script>
+    </body>
+</html>

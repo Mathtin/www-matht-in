@@ -1,0 +1,6 @@
+{
+    "rust-analyzer.cargo.extraArgs": [
+        "--target-dir",
+        "build/shards-browser-dev"
+    ]
+}
