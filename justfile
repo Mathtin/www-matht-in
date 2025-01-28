@@ -65,6 +65,8 @@ build:
         && {{find-wasm}} -exec {{log-dist}}/{} \; \
                          -exec cp {} {{full-dist-path}}/{} \;
 
+    @{{log}} "Success! Distributive path:" {{full-dist-path}}
+
 build-dev:
     @{{prelog}} "Building shards-browser-dev: "
     wasm-pack --verbose \
@@ -100,6 +102,8 @@ build-dev:
     cd {{full-build-path}}/shards-browser-dev-pkg \
         && {{find-wasm}} -exec {{log-dist-dev}}/{} \; \
                          -exec cp {} {{full-dist-dev-path}}/{} \;
+
+    @{{log}} "Success! Developer distributive path:" {{full-dist-dev-path}}
 
 test:
     wasm-pack test --firefox shards-browser --target-dir {{full-build-path}}/shards-browser-test
