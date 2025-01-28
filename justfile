@@ -83,7 +83,7 @@ build-dev:
     @{{prelog}} "Copying front-page files: "
     cd front-page \
         && {{find-file}} -exec {{log-dist-dev}}/{} \; \
-                         -exec cp {} ../build/dist-dev/{} \;
+                         -exec cp {} {{full-dist-dev-path}}/{} \;
 
     @{{prelog}} "Removing previous error_pages: "
     rm -r {{full-dist-dev-path}}/.error_pages 2> /dev/null || {{log}} skipping {{full-dist-dev-path}}/.error_pages
@@ -102,4 +102,4 @@ build-dev:
                          -exec cp {} {{full-dist-dev-path}}/{} \;
 
 test:
-    wasm-pack test --firefox shards-browser --target-dir ../build/shards-browser-test
+    wasm-pack test --firefox shards-browser --target-dir {{full-build-path}}/shards-browser-test
