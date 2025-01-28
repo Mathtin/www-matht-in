@@ -1,5 +1,12 @@
 [workspace]
+resolver = "2"
 
 members = [
     "shards-browser",
 ]
+
+[profile.release]
+opt-level = "s"
+
+[profile.release.package.shards-browser]
+opt-level = "s"
