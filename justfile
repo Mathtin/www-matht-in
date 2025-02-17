@@ -12,6 +12,7 @@ full-dist-dev-path := shell('realpath -m ' + dist-dev-path)
 
 # Commands
 prelog := "echo -n " + log_prefix
+prelog-cmd := prelog + "\"$ \""
 log := "echo " + log_prefix
 log-dist := log + " + " + full-dist-path
 log-dist-dev := log + " + " + full-dist-dev-path
@@ -25,42 +26,44 @@ find-wasm := find-file +  " -name \\*.wasm"
 
 
 build:
-    @{{prelog}} "Building shards-browser: "
+    @{{log}} "Building shards-browser..." && {{prelog-cmd}}
     wasm-pack --verbose \
             build shards-browser --target web \
             --out-dir {{full-build-path}}/shards-browser-pkg \
             --target-dir {{full-build-path}}/shards-browser
 
-    @{{prelog}} "Preparing distibutive: "
+    @{{log}} "Preparing distibutive" && {{prelog-cmd}}
     mkdir -p {{full-dist-path}}
 
-    @{{prelog}} "Building front-page directory tree: "
+    @{{log}} "Building front-page directory tree..." && {{prelog-cmd}}
     cd front-page \
         && {{find-dir}} -exec {{log-dist}}/{} \; \
                         -exec mkdir -p {{full-dist-path}}/{} \;
 
-    @{{prelog}} "Minifying front-page .(html|css|js) files: "
+    @{{log}} "Minifying front-page .(html|css|js) files..." && {{prelog-cmd}}
     cd front-page \
         && {{find-html-css-js}} -exec {{log-dist}}/{} \; \
                                 -exec minhtml --minify-css --minify-js -o {{full-dist-path}}/{} {} \;
 
-    @{{prelog}} "Copying front-page resource files: "
+    @{{log}} "Copying front-page resource files..." && {{prelog-cmd}}
     cd front-page \
         && {{find-not-html-css-js}} -exec {{log-dist}}/{} \; \
                                     -exec cp {} {{full-dist-path}}/{} \;
 
-    @{{prelog}} "Removing previous error_pages: "
-    rm -r {{full-dist-path}}/.error_pages 2> /dev/null || {{log}} "skipping build/dist/.error_pages"
+    @{{log}} "Removing previous .error_pages..." && {{prelog-cmd}}
+    rm -r {{full-dist-path}}/.error_pages 2> /dev/null \
+        && {{log}} removed {{full-dist-path}}/dist/.error_pages \
+        || {{log}} missing {{full-dist-path}}/dist/.error_pages
 
-    @{{prelog}} "Moving current error_pages: "
+    @{{log}} "Moving current error_pages..." && {{prelog-cmd}}
     mv {{full-dist-path}}/error_pages {{full-dist-path}}/.error_pages
 
-    @{{prelog}} "Minifying shards-browser .(html|css|js) files: "
+    @{{log}} "Minifying shards-browser .(html|css|js) files..." && {{prelog-cmd}}
     cd {{full-build-path}}/shards-browser-pkg \
         && {{find-html-css-js}} -exec {{log-dist}}/{} \; \
                                 -exec minhtml -o {{full-dist-path}}/{} {} \;
 
-    @{{prelog}} "Copying shards-browser .wasm files: "
+    @{{log}} "Copying shards-browser .wasm files..." && {{prelog-cmd}}
     cd {{full-build-path}}/shards-browser-pkg \
         && {{find-wasm}} -exec {{log-dist}}/{} \; \
                          -exec cp {} {{full-dist-path}}/{} \;
