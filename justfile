@@ -13,12 +13,14 @@ full-dist-dev-path := shell('realpath -m ' + dist-dev-path)
 
 full-log-handler-path := shell('realpath -m ./scripts/log-handler.sh')
 full-foreach-path := shell('realpath -m ./scripts/foreach.sh')
+full-wasm-pack-path := shell('realpath -m ./scripts/wasm-pack.sh')
 
 
 # Commands
 
 log-handler := "sh " + full-log-handler-path
 foreach := "sh " + full-foreach-path
+wasm-pack := "sh " + full-wasm-pack-path
 
 log-cmd-prefix := "date '+%Y-%m-%d %H:%M:%S.%3N' | cut -z -c -23 && echo "
 log-cmd-suffix := "\" [just]\""
@@ -44,11 +46,11 @@ foreach-wasm := foreach-file +  " \\( .wasm \\)"
 
 build:
     @{{log}} "Building shards-browser..." && {{prelog-shell}}
-    wasm-pack --verbose \
+    sh scripts/wasm-pack.sh \
+            --verbose \
             build shards-browser --target web \
             --out-dir {{full-build-path}}/shards-browser-pkg \
-            --target-dir {{full-build-path}}/shards-browser \
-        2>&1 | {{log-handler}} "wasm-pack"
+            --target-dir {{full-build-path}}/shards-browser
 
     @{{log}} "Preparing distibutive" && {{prelog-shell}}
     mkdir -p {{full-dist-path}}
@@ -72,43 +74,44 @@ build:
     @{{log}} "Moving current error_pages..." && {{prelog-shell}}
     mv {{full-dist-path}}/error_pages {{full-dist-path}}/.error_pages
 
-    @{{log}} "Minifying shards-browser .(html|css|js) files..." && {{prelog-shell}}
+    @{{log}} "Minifying shards-browser js files..." && {{prelog-shell}}
     cd {{full-build-path}}/shards-browser-pkg \
         && {{foreach-js}} minhtml -o {{full-dist-path}}/{} {}
 
-    @{{log}} "Copying shards-browser .wasm files..." && {{prelog-shell}}
+    @{{log}} "Copying shards-browser wasm files..." && {{prelog-shell}}
     cd {{full-build-path}}/shards-browser-pkg \
         && {{foreach-wasm}} cp {} {{full-dist-path}}/{}
 
     @{{log}} "Success! Distributive path:" {{full-dist-path}}
 
 build-dev:
-    @{{log}} "Building shards-browser-dev: "
-    wasm-pack --verbose \
+    @{{log}} "Building shards-browser-dev: " && {{prelog-shell}}
+    sh scripts/wasm-pack.sh \
+            --verbose \
             build shards-browser --dev --target web \
             --out-dir {{full-build-path}}/shards-browser-dev-pkg \
             --target-dir {{full-build-path}}/shards-browser-dev
 
-    @{{log}} "Preparing developer distibutive: "
+    @{{log}} "Preparing developer distibutive: " && {{prelog-shell}}
     mkdir -p {{full-dist-dev-path}}
 
-    @{{log}} "Building front-page directory tree: "
+    @{{log}} "Building front-page directory tree: " && {{prelog-shell}}
     cd front-page && {{foreach}} d mkdir -p {{full-dist-dev-path}}/{}
 
-    @{{log}} "Copying front-page files: "
+    @{{log}} "Copying front-page files: " && {{prelog-shell}}
     cd front-page && {{foreach-file}} cp {} {{full-dist-dev-path}}/{}
 
-    @{{log}} "Removing previous error_pages: "
-    rm -r {{full-dist-dev-path}}/.error_pages 2> /dev/null || {{log}} skipping {{full-dist-dev-path}}/.error_pages
+    @{{log}} "Removing previous error_pages: " && {{prelog-shell}}
+    rm -r {{full-dist-dev-path}}/.error_pages | {{log-handler}} "rm"
 
-    @{{log}} "Moving current error_pages: "
+    @{{log}} "Moving current error_pages: " && {{prelog-shell}}
     mv {{full-dist-dev-path}}/error_pages {{full-dist-dev-path}}/.error_pages
 
-    @{{log}} "Copying shards-browser-dev html-css-js files: "
+    @{{log}} "Copying shards-browser-dev js files: " && {{prelog-shell}}
     cd {{full-build-path}}/shards-browser-dev-pkg \
         && {{foreach-js}} cp {} {{full-dist-dev-path}}/{}
 
-    @{{log}} "Copying shards-browser-dev wasm files: "
+    @{{log}} "Copying shards-browser-dev wasm files: " && {{prelog-shell}}
     cd {{full-build-path}}/shards-browser-dev-pkg \
         && {{foreach-wasm}} cp {} {{full-dist-dev-path}}/{}
 
