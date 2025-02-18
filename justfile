@@ -36,7 +36,7 @@ find-js := find-file +  " -name \\*.js"
 find-res := find-file +  " -name \\*.ico"
 find-wasm := find-file +  " -name \\*.wasm"
 
-find-log := "';' -print " + log-trap + " find"
+find-log-trap := "';' -print " + log-trap + " find"
 
 
 build:
@@ -54,17 +54,17 @@ build:
     @{{log}} "Building front-page directory tree..." && {{prelog-shell}}
     cd front-page \
     && {{find-dir}} -exec mkdir -p {{full-dist-path}}/{} \
-        {{find-log}} making {{full-dist-path}}/
+        {{find-log-trap}} making {{full-dist-path}}/
 
     @{{log}} "Minifying front-page html, css and js files..." && {{prelog-shell}}
     cd front-page \
     && {{find-html-css-js}} -exec minhtml --minify-css --minify-js -o {{full-dist-path}}/{} {} \
-        {{find-log}} minifying ''
+        {{find-log-trap}} minifying ''
 
     @{{log}} "Copying front-page resource files..." && {{prelog-shell}}
     cd front-page \
     && {{find-res}} -exec cp {} {{full-dist-path}}/{} \
-        {{find-log}} copying ''
+        {{find-log-trap}} copying ''
 
     @{{log}} "Removing previous .error_pages..." && {{prelog-shell}}
     rm -vr {{full-dist-path}}/.error_pages {{log-trap}} rm
@@ -75,12 +75,12 @@ build:
     @{{log}} "Minifying shards-browser js files..." && {{prelog-shell}}
     cd {{full-build-path}}/shards-browser-pkg \
     && {{find-js}} -exec minhtml -o {{full-dist-path}}/{} {} \
-        {{find-log}} minifying ''
+        {{find-log-trap}} minifying ''
 
     @{{log}} "Copying shards-browser wasm files..." && {{prelog-shell}}
     cd {{full-build-path}}/shards-browser-pkg \
     && {{find-wasm}} -exec cp {} {{full-dist-path}}/{} \
-        {{find-log}} copying ''
+        {{find-log-trap}} copying ''
 
     @{{log}} "Success! Distributive path:" {{full-dist-path}}
 
@@ -99,12 +99,12 @@ build-dev:
     @{{log}} "Building front-page directory tree: " && {{prelog-shell}}
     cd front-page \
     && {{find-dir}} -exec mkdir -p {{full-dist-dev-path}}/{} \
-        {{find-log}} making dir {{full-dist-path}}/
+        {{find-log-trap}} making dir {{full-dist-path}}/
 
     @{{log}} "Copying front-page files: " && {{prelog-shell}}
     cd front-page \
     && {{find-file}} -exec cp {} {{full-dist-dev-path}}/{} \
-        {{find-log}} copying ''
+        {{find-log-trap}} copying ''
 
     @{{log}} "Removing previous error_pages: " && {{prelog-shell}}
     rm -r {{full-dist-dev-path}}/.error_pages {{log-trap}} "rm"
@@ -115,7 +115,7 @@ build-dev:
     @{{log}} "Copying shards-browser-dev js and wasm files: " && {{prelog-shell}}
     cd {{full-build-path}}/shards-browser-dev-pkg \
     && {{find-js-wasm}} -exec cp {} {{full-dist-dev-path}}/{} \
-        {{find-log}} copying ''
+        {{find-log-trap}} copying ''
 
     @{{log}} "Success! Developer distributive path:" {{full-dist-dev-path}}
 
