@@ -24,4 +24,5 @@ if [ "$1" = '(' ]; then
     fi
 fi
 
+echo find . -type "$FIND_TYPE_ARG" -name '*'"$FIND_FILTER" -exec "$@" \; | sh "$LOG_HANDLER" "foreach"
 find . -type "$FIND_TYPE_ARG" -name '*'"$FIND_FILTER" -exec echo "$@" \; -exec "$@" \; | sh "$LOG_HANDLER" "find"
