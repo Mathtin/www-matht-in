@@ -1,86 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
-        <meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
-        <!--[if lt IE 9]><meta http-equiv='X-UA-Compatible' content='IE=edge'><![endif]-->
-        <style>
-        html {
-            height:                         100%;
-            -webkit-text-size-adjust:       100%;
-            -ms-text-size-adjust:           100%;
-            font-size:                      10px;
-            -webkit-tap-highlight-color:    transparent;
-        }
-        
-        *, :after, :before {
-            -webkit-box-sizing: border-box;
-            -moz-box-sizing:    border-box;
-            box-sizing:         border-box;
-        }
-        
-        body {
-            height:             100%;
-            margin:             0;
-            font-size:          14px;
-            line-height:        1.42857143;
-            color:              #141414;
-            background-color:   #202020;
-            display:            -webkit-box;
-            display:             -moz-box;
-            display:            -ms-flexbox;
-            display:            -webkit-flex;
-            display:            flex;
-            flex-wrap: nowrap;
-            flex-direction: row;
-            justify-content: center;
-            font-family: Arial;
-            align-items: center;
-            overflow: hidden;
-          -webkit-touch-callout: none; /* iOS Safari */
-            -webkit-user-select: none; /* Safari */
-             -khtml-user-select: none; /* Konqueror HTML */
-               -moz-user-select: none; /* Firefox */
-                -ms-user-select: none; /* Internet Explorer/Edge */
-                    user-select: none;
-        }
-
-        h3 {
-            font-family:    inherit;
-            font-weight:    500;
-            line-height:    1.1;
-            color:          inherit;
-            margin-top:     0;
-            margin-bottom:  20px;
-            font-size:      24px;
-        }
-
-        .error-block {
-            width:                  300px;
-            background-color:       #5c5c5c;
-            padding:                25px 27px;
-            -moz-border-radius:     0;
-            -webkit-border-radius:  0;
-            border-radius:          0;
-            position:      relative;
-        }
-        
-        .ma {
-            font-weight: bold;
-            font-size: 32px;
-            position: absolute;
-            bottom: 0;
-            right: 8px;
-            opacity: 0.2;
-        }
-        </style>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1" />
+        <meta name="theme-color" content="#FFFFFF">
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
         <title>500 Internal server error</title>
+        <style>
+
+@font-face {
+    font-family: "Falling Sky Medium";
+    src: local('Falling Sky Medium'), url("fonts/FallingSkyMedium.woff2") format("woff2");
+}
+
+body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    color: #141414;
+    background-color: #202020;
+    font-family: "Falling Sky Meduim", sans-serif;
+    user-select: none;
+    justify-content: center;
+    align-items: center;
+    font-size: 4mm;
+}
+
+p {
+    margin-top: 0;
+    margin-bottom: 1mm;
+    font-size: 10mm;
+}
+
+a {
+    color: #dddddd;
+}
+
+.error-block {
+    width: 7cm;
+    background-color: #5c5c5c;
+    padding: 10mm;
+    position: relative;
+}
+
+.error-block div {
+    padding: 1mm;
+}
+
+.ma {
+    font-weight: bold;
+    font-size: 9mm;
+    position: absolute;
+    bottom: 0;
+    right: 2mm;
+    opacity: 0.2;
+}
+
+        </style>
     </head>
     <body>
         <div class='error-block'>
-            <h3>Error 500</h3>
-             <div style='margin-bottom: 5px'>Internal server error</div>
-             <div>Try again later...<div>
-             <div class="ma">MA</div>
+            <p>Error 500</p>
+            <div><span>Internal server error</span></div>
+            <div class="ma">MA</div>
         </div>
     </body>
 </html>
