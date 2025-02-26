@@ -20,7 +20,7 @@ body {
     display: flex;
     justify-content: center;
     background-color: black;
-    color: #ebebeb;
+    color: transparent;
     font-family: "Falling Sky Meduim", sans-serif;
 }
 
@@ -38,6 +38,10 @@ a:hover {
     display: flex;
     flex-direction: column;
     height: 100%;
+}
+
+.container:hover {
+    color: #bebebe;
 }
 
 .box {
@@ -64,6 +68,7 @@ a:hover {
 
 #content-title {
     border: 2.5mm #ebebeb solid;
+    color: #ebebeb;
     font-size: 40mm;
     cursor: pointer;
     user-select: none;
@@ -86,6 +91,7 @@ a:hover {
 
 #content-text {
     font-size: 7mm;
+    color: #ebebeb;
 }
 
 @media (max-width:599px) {
