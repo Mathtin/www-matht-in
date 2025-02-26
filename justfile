@@ -32,8 +32,8 @@ find-file := find + " -type f"
 
 find-html-css-js := find-file +  " \\( -iname \\*.html -o -iname \\*.css -o -iname \\*.js \\)"
 find-js-wasm := find-file +  " \\( -iname \\*.js -o -iname \\*.wasm \\)"
+find-res := find-file +  " \\( -iname \\*.ico -o -iname \\*.woff2 \\)"
 find-js := find-file +  " -name \\*.js"
-find-ico := find-file +  " -name \\*.ico"
 find-wasm := find-file +  " -name \\*.wasm"
 
 find-log-trap := "';' -print " + log-trap + " find"
@@ -77,9 +77,9 @@ build-front-page: build-dist-dirs
     && {{find-html-css-js}} -exec minhtml --minify-css --minify-js -o {{full-dist-path}}/{} {} \
         {{find-log-trap}} minifying ''
 
-    @{{log}} "Copying front-page ico files..." && {{prelog-shell}}
+    @{{log}} "Copying front-page resource files..." && {{prelog-shell}}
     cd front-page \
-    && {{find-ico}} -exec cp {} {{full-dist-path}}/{} \
+    && {{find-res}} -exec cp {} {{full-dist-path}}/{} \
         {{find-log-trap}} copying ''
 
     @{{log}} "Removing previous .error_pages..." && {{prelog-shell}}
