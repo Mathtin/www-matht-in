@@ -1,36 +1,36 @@
 <div align="center">
 
-  <h1><code>www-matht-in</code></h1>
+  <a href="https://matht.in/" style="border: 1px solid; padding: 2px">
+    MATHT.IN
+  </a>
 
-  <strong><a href="https://matht.in/">matht.in</a> website</strong>
-
-  <h3>
-    <a href="https://matht.in/">Main Page</a>
-  </h3>
 </div>
 
 ## About
 
 Repository for <a href="https://matht.in/">matht.in</a> website
 
-## 🚴 Usage
+
+## ▶️ Usage
 
 ### 🛠️ Build
 
+#### 1. Install dependencies (toolchain)
 
-
-This project uses following for build procedure:
+This project uses following:
 
 * Rust <a href="https://rustup.rs/">cargo</a>
 * Make-like <a href="https://github.com/casey/just">just</a> utility
 * <a href="https://rustwasm.github.io/">wasm-pack</a>
 * <a href="https://github.com/wilsonzlin/minify-html/tree/master/minhtml">minhtml</a> (HTML/CSS/JS minifier)
 
-Run following to setup toolchain (on linux):
+Run following to setup (on linux shell):
 
 ```
 sh toolchain-setup.sh
 ```
+
+#### 2. Build distribution
 
 Run following to build release bundle:
 
@@ -40,15 +40,24 @@ just build
 
 Resulting files will be stored in `build/dist`
 
-### 🔬 Test in Browsers
+
+## Other
+
+### Tests
+
+To run tests in browsers (start a webserver on localhost:8000)
 
 ```
 just test
 ```
 
+
 ## License
 
-Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+This work is licensed under a
+[Creative Commons Attribution 4.0 International License][cc-by].
+
+[cc-by]: http://creativecommons.org/licenses/by/4.0/
 
 ### Contribution
 

@@ -95,6 +95,11 @@ a:hover {
     color: #ebebeb;
 }
 
+#prei-dot {
+    position: absolute;
+    left: calc(50% + 39mm);
+}
+
 @media (max-width:599px) {
     .box {
         padding: 1.3mm;
@@ -111,6 +116,11 @@ a:hover {
 
     #content-text {
         font-size: 5mm;
+    }
+
+    #prei-dot {
+        position: absolute;
+        left: calc(50% + 15.6mm);
     }
 }
 
@@ -131,6 +141,11 @@ a:hover {
     #content-text {
         font-size: 6mm;
     }
+
+    #prei-dot {
+        position: absolute;
+        left: calc(50% + 27.5mm);
+    }
 }
 
         </style>
@@ -142,7 +157,7 @@ a:hover {
                 <div id="wasm-status">WebAssembly not loaded</div>
             </div>
             <div class="middle box" id="content-title">
-                <span>MATHTIN</span>
+                <span>MATHT<span id="prei-dot">.</span>IN</span>
             </div>
             <div class="lower box" id="content-text">
                 <span>contact <a id="mailto" href="mailto:me@matht.in">me@matht.in</a></span>
