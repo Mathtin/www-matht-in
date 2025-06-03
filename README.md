@@ -62,6 +62,6 @@ This work is licensed under a
 ### Contribution
 
 Unless you explicitly state otherwise, any contribution intentionally
-submitted for inclusion in the work by you, as defined in the Apache-2.0
+submitted for inclusion in the work by you, as defined in same
 license, shall licensed as above, without any additional terms or
 conditions.
