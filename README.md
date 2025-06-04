@@ -1,8 +1,6 @@
 <div align="center">
 
-  <a href="https://matht.in/" style="border: 1px solid; padding: 2px">
-    MATHT.IN
-  </a>
+  <a href="https://matht.in/">MATHT.IN</a>
 
 </div>
 
