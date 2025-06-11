@@ -16,8 +16,6 @@ egui-wgpu = { version = "0.31.1", features = ["winit"] }
 # Basic Graphics Stack
 wgpu = { version = "24.0.5", default-features = false }
 winit = { version = "0.30.11", features = ["android-native-activity"] }
-# Add web time
-web-time = "1.1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # Native Platform Logging
@@ -25,18 +23,18 @@ env_logger = "0.11"
 # Native Immidiate GUI
 egui-winit = "0.31.1"
 # Time formatting
-time = { version = "0.3.41", features = ["formatting", "macros"] }
+time = { version = "0.3.41", features = ["formatting", "macros", "local-offset"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 # Web Platform Logging
 console_error_panic_hook = "0.1.7"
-# Web Platform Graphics Stack
+# Web Platform Immidiate GUI
 egui-winit = { version = "0.31.1", default-features = false }
 # Web API Bindings
 wasm-bindgen = "0.2.100"
 wasm-bindgen-futures = "0.4.50"
 # Time formatting
-time = { version = "0.3.41", features = ["formatting", "wasm-bindgen", "macros"] }
+time = { version = "0.3.41", features = ["formatting", "wasm-bindgen", "macros", "local-offset"] }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.50"

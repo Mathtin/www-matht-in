@@ -1,5 +1,4 @@
 mod log;
-mod time;
 mod utils;
 
 #[cfg(target_arch = "wasm32")]
