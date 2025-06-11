@@ -2,22 +2,50 @@
 name = "shards-browser"
 version = "0.1.0"
 authors = ["mathtin"]
-edition = "2021"
+edition = "2024"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
-[features]
-default = ["console_error_panic_hook"]
-
 [dependencies]
-wasm-bindgen = "0.2.100"
+# Basic Logging
+log = "0.4.27"
+# Basic Immidiate GUI
+egui = "0.31.1"
+egui-wgpu = { version = "0.31.1", features = ["winit"] }
+# Basic Graphics Stack
+wgpu = { version = "24.0.5", default-features = false }
+winit = { version = "0.30.11", features = ["android-native-activity"] }
+# Add web time
+web-time = "1.1.0"
 
-# The `console_error_panic_hook` crate provides better debugging of panics by
-# logging them with `console.error`. This is great for development, but requires
-# all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
-# code size when deploying.
-console_error_panic_hook = { version = "0.1.7", optional = true }
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+# Native Platform Logging
+env_logger = "0.11"
+# Native Immidiate GUI
+egui-winit = "0.31.1"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+# Web Platform Logging
+console_error_panic_hook = "0.1.7"
+console_log = { version = "1", features = ["color"] }
+# Web Platform Graphics Stack
+egui-winit = { version = "0.31.1", default-features = false }
+# Web API Bindings
+wasm-bindgen = "0.2.100"
+wasm-bindgen-futures = "0.4.50"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.50"
+
+[features]
+default = ["wgpu/default"]
+webgl = ["wgpu/webgl"]
+webgpu = ["wgpu/webgpu"]
+
+[profile.release]
+codegen-units = 1 # Reduce parallel code generation units
+strip = true      # Automatically strip symbols from the binary.
+opt-level = "z"   # Optimize for size
+lto = true        # Link time optimization
+panic = "abort"   # On panic, abort immediately rather than unwinding.
