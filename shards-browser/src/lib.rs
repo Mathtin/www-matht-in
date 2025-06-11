@@ -1,3 +1,5 @@
+mod log;
+mod time;
 mod utils;
 
 #[cfg(target_arch = "wasm32")]
@@ -7,19 +9,8 @@ use std::sync::OnceLock;
 
 static START_SUCCESS: OnceLock<bool> = OnceLock::new();
 
-#[cfg(target_arch = "wasm32")]
-fn init_log() {
-    use log::Level;
-    console_log::init_with_level(Level::Trace).expect("error initializing log");
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn init_log() {
-    env_logger::init();
-}  
-
 fn first_startup() -> bool {
-    init_log();
+    log::init_log();
     log::debug!("Shards browser starting!");
 
     #[cfg(target_arch = "wasm32")]
@@ -29,7 +20,6 @@ fn first_startup() -> bool {
 
     return true;
 }
-
 
 #[wasm_bindgen]
 pub fn start() {

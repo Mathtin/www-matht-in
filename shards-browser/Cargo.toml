@@ -24,16 +24,19 @@ web-time = "1.1.0"
 env_logger = "0.11"
 # Native Immidiate GUI
 egui-winit = "0.31.1"
+# Time formatting
+time = { version = "0.3.41", features = ["formatting", "macros"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 # Web Platform Logging
 console_error_panic_hook = "0.1.7"
-console_log = { version = "1", features = ["color"] }
 # Web Platform Graphics Stack
 egui-winit = { version = "0.31.1", default-features = false }
 # Web API Bindings
 wasm-bindgen = "0.2.100"
 wasm-bindgen-futures = "0.4.50"
+# Time formatting
+time = { version = "0.3.41", features = ["formatting", "wasm-bindgen", "macros"] }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.50"
