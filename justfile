@@ -39,6 +39,20 @@ find-wasm := find-file +  " -name \\*.wasm"
 find-log-trap := "';' -print " + log-trap + " find"
 
 
+# Quick setup and run (with simple-http-server)
+run: build simple-http-server
+    @{{log}} "Run simple-http-server..." && {{prelog-shell}}
+    simple-http-server -i -p 8080 --ip 127.0.0.1 {{full-dist-path}}
+
+run-dev: build-dev simple-http-server
+    @{{log}} "Run simple-http-server..." && {{prelog-shell}}
+    simple-http-server --nocache -i -p 8080 --ip 127.0.0.1 {{full-dist-dev-path}}
+
+simple-http-server:
+    @{{log}} "Processing simple-http-server installation..." && {{prelog-shell}}
+    type simple-http-server || cargo install simple-http-server
+
+
 # Production builds
 
 build-dist-dirs:
@@ -47,7 +61,7 @@ build-dist-dirs:
 
 
 build-shards-browser: build-dist-dirs
-    @echo "Building shards-browser..." {{log-trap}} just && {{prelog-shell}}
+    @{{log}} "Building shards-browser..." && {{prelog-shell}}
     wasm-pack \
             --verbose \
             build shards-browser --target web \

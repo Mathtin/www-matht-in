@@ -38,6 +38,39 @@
         }
       },
       {
+        "label": "Serve build",
+        "type": "shell",
+        "command": "just run",
+        "windows": {
+          "command": "wsl -e just run"
+        },
+        "group": {
+          "kind": "test",
+          "isDefault": true
+        },
+        "presentation": {
+          "reveal": "always",
+          "clear": true,
+          "panel": "shared"
+        }
+      },
+      {
+        "label": "Serve dev-build",
+        "type": "shell",
+        "command": "just run-dev",
+        "windows": {
+          "command": "wsl -e just run-dev"
+        },
+        "group": {
+          "kind": "test",
+        },
+        "presentation": {
+          "reveal": "always",
+          "clear": true,
+          "panel": "shared"
+        }
+      },
+      {
         "label": "Test in Firefox",
         "type": "shell",
         "command": "just test",
@@ -46,7 +79,6 @@
         },
         "group": {
           "kind": "test",
-          "isDefault": true
         },
         "presentation": {
           "reveal": "always",

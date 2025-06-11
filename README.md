@@ -1,12 +1,12 @@
 <div align="center">
 
-  <a href="https://matht.in/">MATHT.IN</a>
+  [MATHT.IN](https://matht.in/)
 
 </div>
 
 ## About
 
-Repository for <a href="https://matht.in/">matht.in</a> website
+Repository for [matht.in](https://matht.in/) website
 
 
 ## ▶️ Usage
@@ -17,10 +17,10 @@ Repository for <a href="https://matht.in/">matht.in</a> website
 
 This project uses following:
 
-* Rust <a href="https://rustup.rs/">cargo</a>
-* Make-like <a href="https://github.com/casey/just">just</a> utility
-* <a href="https://rustwasm.github.io/">wasm-pack</a>
-* <a href="https://github.com/wilsonzlin/minify-html/tree/master/minhtml">minhtml</a> (HTML/CSS/JS minifier)
+* Rust [cargo](https://rustup.rs/)
+* Make-like [just](https://github.com/casey/just) utility
+* [wasm-pack](https://rustwasm.github.io/)
+* [minhtml](https://github.com/wilsonzlin/minify-html/tree/master/minhtml) (HTML/CSS/JS minifier)
 
 Run following to setup (on linux shell):
 
@@ -37,6 +37,14 @@ just build
 ```
 
 Resulting files will be stored in `build/dist`
+
+#### 3. Quickly serve
+
+Run following to quickly setup and run [simple-http-server](https://github.com/TheWaWaR/simple-http-server) (will bind to http://127.0.0.1:8080/index.html):
+
+```
+just run
+```
 
 
 ## Other
