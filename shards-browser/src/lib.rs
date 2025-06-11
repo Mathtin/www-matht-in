@@ -5,7 +5,7 @@ use wasm_bindgen::prelude::*;
 
 use std::sync::OnceLock;
 
-static STARTED: OnceLock<()> = OnceLock::new();
+static START_SUCCESS: OnceLock<bool> = OnceLock::new();
 
 #[cfg(target_arch = "wasm32")]
 fn init_log() {
@@ -18,7 +18,7 @@ fn init_log() {
     env_logger::init();
 }  
 
-fn first_startup() {
+fn first_startup() -> bool {
     init_log();
     log::debug!("Shards browser starting!");
 
@@ -26,11 +26,13 @@ fn first_startup() {
     utils::set_panic_hook();
 
     log::debug!("Shards browser started!");
+
+    return true;
 }
 
 
 #[wasm_bindgen]
 pub fn start() {
-    STARTED.get_or_init(first_startup);
-    log::debug!("Start click");
+    let res = START_SUCCESS.get_or_init(first_startup);
+    log::debug!("Start result: {}", res);
 }
