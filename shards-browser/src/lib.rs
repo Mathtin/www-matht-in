@@ -21,8 +21,18 @@ fn first_startup() -> bool {
     return true;
 }
 
-#[wasm_bindgen]
-pub fn start() {
+fn start_impl() {
     let res = START_SUCCESS.get_or_init(first_startup);
     log::debug!("Start result: {}", res);
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+pub fn start() {
+    start_impl()
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn start() {
+    start_impl()
 }
