@@ -12,3 +12,12 @@ pub use web_logger::init_log;
 #[cfg(not(target_arch = "wasm32"))]
 pub use env_logger::init_log;
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_works() {
+        init_log();
+    }
+}

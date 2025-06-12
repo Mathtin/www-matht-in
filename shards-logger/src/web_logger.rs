@@ -59,6 +59,7 @@ extern "C" {
 }
 
 pub fn init_log() {
+    console_error_panic_hook::set_once();
     log::set_logger(&DEFAULT_LOGGER).expect("error initializing log");
     log::set_max_level(LOG_LEVEL.to_level_filter());
 }

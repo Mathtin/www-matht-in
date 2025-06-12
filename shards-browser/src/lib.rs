@@ -1,6 +1,3 @@
-mod log;
-mod utils;
-
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
@@ -10,10 +7,6 @@ static START_SUCCESS: OnceLock<bool> = OnceLock::new();
 
 fn first_startup() -> bool {
     log::init_log();
-    log::debug!("Shards browser starting!");
-
-    #[cfg(target_arch = "wasm32")]
-    utils::set_panic_hook();
 
     log::debug!("Shards browser started!");
 

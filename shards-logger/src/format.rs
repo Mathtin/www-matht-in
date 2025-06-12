@@ -20,9 +20,5 @@ pub fn format_message(record: &Record) -> String {
         .expect("can't get local time zone")
         .format(&DATE_FORMAT)
         .expect("log format");
-    if record.level() >= Level::Debug {
-        format!("{} [{}]: {}", &now, record.level(), record.args())
-    } else {
-        format!("{}", record.args())
-    }
+    format!("{} [{}] {}", &now, record.level(), record.args())
 }
