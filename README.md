@@ -36,7 +36,7 @@ Run following to build release bundle:
 just build
 ```
 
-Resulting files will be stored in `build/dist`
+Resulting files will be stored in `target/web-dist`
 
 #### 3. Quickly serve
 
