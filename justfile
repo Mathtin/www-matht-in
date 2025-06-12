@@ -1,6 +1,6 @@
 # Build Setup
 
-build-path := "./build"
+build-path := "./target"
 dist-path := build-path / "dist/"
 dist-dev-path := build-path / "dist-dev/"
 
@@ -65,9 +65,7 @@ build-shards-browser: build-dist-dirs
     wasm-pack \
             --verbose \
             build shards-browser --target web \
-            --out-dir {{full-build-path}}/shards-browser-pkg \
-            --target-dir {{full-build-path}}/shards-browser \
-            {{log-trap}} wasm-pack
+            --out-dir {{full-build-path}}/shards-browser-pkg
 
     @{{log}} "Minifying shards-browser js files..." && {{prelog-shell}}
     cd {{full-build-path}}/shards-browser-pkg \

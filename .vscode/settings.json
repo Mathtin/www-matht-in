@@ -1,7 +1,3 @@
 {
-    "rust-analyzer.cargo.extraArgs": [
-        "--target-dir",
-        "build/shards-browser-dev"
-    ],
     "rust-analyzer.cargo.target": "wasm32-unknown-unknown"
 }
