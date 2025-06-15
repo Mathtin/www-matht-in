@@ -3,7 +3,7 @@ mod paths;
 mod web_dist;
 
 
-use core_dist::{make_all_directories, BUILD_PATH, TaskResult};
+use core_dist::{make_each_directory, BUILD_PATH, TaskResult};
 use web_dist::{
     build_web_distribution, 
     build_web_distribution_dev,
@@ -11,7 +11,7 @@ use web_dist::{
     serve_web_distribution_dev
 };
 use std::{
-    collections::HashMap, env, io::Error, sync::LazyLock
+    collections::HashMap, env, io::Error, process, sync::LazyLock
 };
 
 
@@ -48,13 +48,13 @@ fn main() {
     log::init_log();
     if let Err(e) = try_main() {
         log::error!("{}", e);
-        std::process::exit(-1);
+        process::exit(-1);
     }
 }
 
 
 fn try_main() -> Result<(), Error> {
-    make_all_directories(&BUILD_PATH)?;
+    make_each_directory(&BUILD_PATH)?;
 
     let chosen_task = env::args().nth(1);
 

@@ -3,8 +3,12 @@ use std::sync::LazyLock;
 use std::thread;
 use std::time::Duration;
 
+use crate::core_dist::{
+    BUILD_PATH, PROJECT_ROOT, TaskResult, cargo, copy_file_tree_filtered,
+    for_each_file_recursively, make_each_directory, shell, shell_log_piped,
+};
 use crate::paths;
-use crate::core_dist::{cargo, copy_file_tree_filtered, for_each_file_recursively, make_all_directories, shell, shell_log_piped, TaskResult, BUILD_PATH, PROJECT_ROOT};
+
 
 const HTTP_SERVER: &str = "simple-http-server";
 const WASM_PACK: &str = "wasm-pack";
@@ -13,7 +17,8 @@ const FRONT_PAGE_DIR: &str = "front-page";
 const ERROR_PAGE_SUBDIR: &str = "error_pages";
 const HIDDEN_ERROR_PAGE_DIR: &str = ".error_pages";
 
-static ERROR_PAGE_PATH: LazyLock<PathBuf> = LazyLock::new(|| PROJECT_ROOT.join(FRONT_PAGE_DIR).join(ERROR_PAGE_SUBDIR));
+static ERROR_PAGE_PATH: LazyLock<PathBuf> =
+    LazyLock::new(|| PROJECT_ROOT.join(FRONT_PAGE_DIR).join(ERROR_PAGE_SUBDIR));
 
 const MINIFY_EXTENSIONS: &[&[u8]] = &[b"html", b"css", b"js"];
 
@@ -46,10 +51,14 @@ pub fn serve_web_distribution_dev() -> TaskResult {
 }
 
 
-fn build_web_distribution_by_path(web_dist_path: &Path, wasm_pkg_path: &Path, do_minify: bool) -> TaskResult {
+fn build_web_distribution_by_path(
+    web_dist_path: &Path,
+    wasm_pkg_path: &Path,
+    do_minify: bool,
+) -> TaskResult {
     cargo(&["install", WASM_PACK])?;
 
-    make_all_directories(&web_dist_path)?;
+    make_each_directory(&web_dist_path)?;
 
     let wasm_pkg_path_arg = wasm_pkg_path.to_string_lossy();
 
@@ -70,7 +79,6 @@ fn build_web_distribution_by_path(web_dist_path: &Path, wasm_pkg_path: &Path, do
         minify_swarm(&front_page_path, web_dist_path)?;
         // copy rest from front-page
         copy_file_tree_filtered(&front_page_path, web_dist_path, MINIFY_EXTENSIONS, false)?;
-
     } else {
         // copy all wasm modules and js-bindings
         copy_file_tree_filtered(wasm_pkg_path, web_dist_path, &[b"js", b"wasm"], true)?;
@@ -102,14 +110,20 @@ fn minify_swarm(input: &Path, output: &Path) -> TaskResult {
         let mut handles = vec![];
         for_each_file_recursively(input, |relative_path| {
             // check extension
-            match relative_path.extension().map(|os_s| os_s.as_encoded_bytes()) {
+            match relative_path
+                .extension()
+                .map(|os_s| os_s.as_encoded_bytes())
+            {
                 None => return,
-                Some(ext) if ! MINIFY_EXTENSIONS.contains(&ext) => return,
-                Some(_) => {},  // extension check passed
+                Some(ext) if !MINIFY_EXTENSIONS.contains(&ext) => return,
+                Some(_) => {} // extension check passed
             }
             // wait for thread pool, always have handles to extract because of (1)
             while handles.len() >= available_parallelism {
-                let extracted = handles.extract_if(.., |h: &mut thread::ScopedJoinHandle<TaskResult>| !h.is_finished())
+                let extracted = handles
+                    .extract_if(.., |h: &mut thread::ScopedJoinHandle<TaskResult>| {
+                        !h.is_finished()
+                    })
                     .count();
                 if extracted == 0 { 
                     thread::sleep(Duration::from_millis(1));
@@ -127,7 +141,11 @@ fn minify_swarm(input: &Path, output: &Path) -> TaskResult {
 
 
 fn minify(input: &Path, output: &Path) -> TaskResult {
-    let names_equal = |path: &Path, name: &str| path.file_name().filter(|n| n.as_encoded_bytes() == name.as_bytes()).is_some();
+    let names_equal = |path: &Path, name: &str| {
+        path.file_name()
+            .filter(|n| n.as_encoded_bytes() == name.as_bytes())
+            .is_some()
+    };
 
     // Inject error directory renaming
     let injected_path;
@@ -135,14 +153,19 @@ fn minify(input: &Path, output: &Path) -> TaskResult {
         // if input is PROJECT_ROOT/FRONT_PAGE_DIR/ERROR_PAGE_SUBDIR/file
         Some(p) if p == *ERROR_PAGE_PATH => match output.parent() {
             // if dest is .../ERROR_PAGE_SUBDIR/file
-            Some(output_parent) if names_equal(output_parent, ERROR_PAGE_SUBDIR) => match output_parent.parent() {
+            Some(output_parent) if names_equal(output_parent, ERROR_PAGE_SUBDIR) => {
+                match output_parent.parent() {
                 Some(output_parent_parent) => {
-                    injected_path = output_parent_parent.join(HIDDEN_ERROR_PAGE_DIR)
-                        .join(output.file_name().expect("output path should point to file"));
+                        injected_path = output_parent_parent.join(HIDDEN_ERROR_PAGE_DIR).join(
+                            output
+                                .file_name()
+                                .expect("output path should point to file"),
+                        );
                     &injected_path
-                },
+                    }
                 None => output,
-            },
+                }
+            }
             Some(_) => output,
             None => output,
         },
@@ -151,7 +174,7 @@ fn minify(input: &Path, output: &Path) -> TaskResult {
     };
 
     if let Some(dest_path_parent) = output.parent() {
-        make_all_directories(dest_path_parent)?;
+        make_each_directory(dest_path_parent)?;
     }
 
     let output = output.to_str().unwrap_or_default();
@@ -159,7 +182,7 @@ fn minify(input: &Path, output: &Path) -> TaskResult {
 
     shell_log_piped(
         "minhtml",
-        &["--minify-css", "--minify-js", "-o", output, input]
+        &["--minify-css", "--minify-js", "-o", output, input],
     )?;
 
     Ok(())

@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
     process::{Command, ExitStatus, Stdio},
     sync::LazyLock,
-    thread
+    thread,
 };
 
 use crate::paths;
@@ -25,7 +25,7 @@ pub static BUILD_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
 });
 
 
-pub fn make_all_directories(path: &Path) -> TaskResult {
+pub fn make_each_directory(path: &Path) -> TaskResult {
     log::debug!("[xtask] making branch: {}", path.display());
 
     if ! path.exists() {
@@ -213,11 +213,19 @@ where
 }
 
 
-pub fn copy_file_tree_filtered(from_dir: &Path, dest_dir: &Path, extensions: &[&[u8]], white_list: bool) -> TaskResult {
+pub fn copy_file_tree_filtered(
+    from_dir: &Path,
+    dest_dir: &Path,
+    extensions: &[&[u8]],
+    white_list: bool,
+) -> TaskResult {
     log::info!(
         "[xtask] Copying all{} {:?} from {} to {}", 
-        (if white_list {""} else {" besides"}), 
-        extensions.iter().map(|e| String::from_utf8_lossy(e)).collect::<Vec<_>>(), 
+        (if white_list { "" } else { " besides" }),
+        extensions
+            .iter()
+            .map(|e| String::from_utf8_lossy(e))
+            .collect::<Vec<_>>(),
         from_dir.display(), 
         dest_dir.display()
     );
@@ -227,16 +235,19 @@ pub fn copy_file_tree_filtered(from_dir: &Path, dest_dir: &Path, extensions: &[&
     for_each_file_recursively(&full_from_dir, |relative_path| {
         // note: we only log errors and return nothing here
         // filter extensions
-        match relative_path.extension().map(|os_s| os_s.as_encoded_bytes()) {
+        match relative_path
+            .extension()
+            .map(|os_s| os_s.as_encoded_bytes())
+        {
             None => return,
             Some(ext) if white_list ^ extensions.contains(&ext) => return,
-            Some(_) => {},  // extension check passed
+            Some(_) => {} // extension check passed
         }
         // make necessary directories
         let from_path = from_dir.join(relative_path);
         let dest_path = dest_dir.join(relative_path);
         if let Some(dest_path_parent) = dest_path.parent() {
-            if let Err(e) = make_all_directories(dest_path_parent) {
+            if let Err(e) = make_each_directory(dest_path_parent) {
                 log::error!("[xtask] Error creating directory {} while copying file tree: {}", dest_path_parent.display(), e);
                 return;
             }

@@ -1,13 +1,9 @@
 use super::format::{LOG_LEVEL, format_message};
-use super::{Record, Level, Log, Metadata};
+use super::{Level, Log, Metadata, Record};
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
-const DEFAULT_LOGGER: ConsoleLogger = ConsoleLogger {
-    formatter: &format_message,
-    log_level: LOG_LEVEL,
-};
 
 type RecordFormatter = &'static (dyn Fn(&Record) -> String + Send + Sync);
 
@@ -19,6 +15,11 @@ struct ConsoleLogger {
     formatter: RecordFormatter,
     log_level: Level,
 }
+
+const DEFAULT_LOGGER: ConsoleLogger = ConsoleLogger {
+    formatter: &format_message,
+    log_level: LOG_LEVEL,
+};
 
 impl Default for ConsoleLogger {
     fn default() -> Self {
@@ -45,6 +46,7 @@ impl Log for ConsoleLogger {
     fn flush(&self) {}
 }
 
+
 // Bindings to console functions
 #[wasm_bindgen]
 extern "C" {
@@ -57,6 +59,7 @@ extern "C" {
     #[wasm_bindgen(js_namespace=console)]
     fn error(text: &str);
 }
+
 
 pub fn init_log() {
     console_error_panic_hook::set_once();
