@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
-use std::thread::{self, ScopedJoinHandle};
+use std::thread;
+use std::time::Duration;
 
 use crate::paths;
 use crate::core_dist::{cargo, copy_file_tree_filtered, for_each_file_recursively, make_all_directories, shell, shell_log_piped, TaskResult, BUILD_PATH, PROJECT_ROOT};
@@ -106,7 +107,8 @@ fn minify_swarm(input: &Path, output: &Path) -> TaskResult {
             }
             // wait for thread pool
             while handles.len() >= available_parallelism {
-                handles.extract_if(.., |h: &mut ScopedJoinHandle<TaskResult>| !h.is_finished()).count();
+                handles.extract_if(.., |h: &mut thread::ScopedJoinHandle<TaskResult>| !h.is_finished()).count();
+                thread::sleep(Duration::from_millis(1));
             }
             // make necessary directories
             let from_path = input.join(relative_path);
