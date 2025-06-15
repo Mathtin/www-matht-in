@@ -3,7 +3,7 @@ mod paths;
 mod web_dist;
 
 
-use core_dist::{make_directory_branch, BUILD_PATH, TaskResult};
+use core_dist::{make_all_directories, BUILD_PATH, TaskResult};
 use web_dist::{
     build_web_distribution, 
     build_web_distribution_dev,
@@ -47,7 +47,7 @@ fn main() {
 
 
 fn try_main() -> Result<(), Error> {
-    make_directory_branch(&BUILD_PATH)?;
+    make_all_directories(&BUILD_PATH)?;
     
     let existing_tasks = HashMap::from(TASKS_LIST);
     let chosen_task = env::args().nth(1);

@@ -24,7 +24,7 @@ pub static BUILD_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
 });
 
 
-pub fn make_directory_branch(path: &Path) -> TaskResult {
+pub fn make_all_directories(path: &Path) -> TaskResult {
     log::debug!("[xtask] making branch: {}", path.display());
 
     if ! path.exists() {
@@ -219,7 +219,7 @@ pub fn copy_file_tree_filtered(from_dir: &Path, dest_dir: &Path, extensions: &[&
         let from_path = from_dir.join(relative_path);
         let dest_path = dest_dir.join(relative_path);
         if let Some(dest_path_parent) = dest_path.parent() {
-            if let Err(e) = make_directory_branch(dest_path_parent) {
+            if let Err(e) = make_all_directories(dest_path_parent) {
                 log::error!("[xtask] Error creating directory {} while copying file tree: {}", dest_path_parent.display(), e);
                 return;
             }
