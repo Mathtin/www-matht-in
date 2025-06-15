@@ -4,12 +4,9 @@
     "version": "2.0.0",
     "tasks": [
       {
-        "label": "Build Pakage",
+        "label": "Build Web Pakage",
         "type": "shell",
-        "command": "just build",
-        "windows": {
-          "command": "wsl -e just build"
-        },
+        "command": "cargo xtask build-web-dist",
         "group": {
           "kind": "build",
           "isDefault": true
@@ -21,12 +18,9 @@
         }
       },
       {
-        "label": "Build Developer Pakage",
+        "label": "Build Developer Web Pakage",
         "type": "shell",
-        "command": "just build-dev",
-        "windows": {
-          "command": "wsl -e just build-release"
-        },
+        "command": "cargo xtask build-web-dist-dev",
         "group": {
           "kind": "build",
           "isDefault": false
@@ -38,12 +32,9 @@
         }
       },
       {
-        "label": "Serve build",
+        "label": "Serve Web Build",
         "type": "shell",
-        "command": "just run",
-        "windows": {
-          "command": "wsl -e just run"
-        },
+        "command": "cargo xtask serve-web-dist",
         "group": {
           "kind": "test",
           "isDefault": true
@@ -55,27 +46,11 @@
         }
       },
       {
-        "label": "Serve dev-build",
+        "label": "Serve Developer Web Build",
         "type": "shell",
         "command": "just run-dev",
         "windows": {
-          "command": "wsl -e just run-dev"
-        },
-        "group": {
-          "kind": "test",
-        },
-        "presentation": {
-          "reveal": "always",
-          "clear": true,
-          "panel": "shared"
-        }
-      },
-      {
-        "label": "Test in Firefox",
-        "type": "shell",
-        "command": "just test",
-        "windows": {
-          "command": "wsl -e just test"
+          "command": "cargo xtask serve-web-dist-dev"
         },
         "group": {
           "kind": "test",

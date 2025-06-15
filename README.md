@@ -13,48 +13,30 @@ Repository for [matht.in](https://matht.in/) website
 
 ### 🛠️ Build
 
-#### 1. Install dependencies (toolchain)
+#### 1. Install toolchain
 
 This project uses following:
 
-* Rust [cargo](https://rustup.rs/)
-* Make-like [just](https://github.com/casey/just) utility
-* [wasm-pack](https://rustwasm.github.io/)
-* [minhtml](https://github.com/wilsonzlin/minify-html/tree/master/minhtml) (HTML/CSS/JS minifier)
+* Rust [cargo](https://www.rust-lang.org/tools/install)
 
-Run following to setup (on linux shell):
-
-```
-sh toolchain-setup.sh
-```
+Install using [link](https://www.rust-lang.org/tools/install).
 
 #### 2. Build distribution
 
-Run following to build release bundle:
+Run following to build web bundle:
 
 ```
-just build
+cargo xtask build-web-dist
 ```
 
 Resulting files will be stored in `target/web-dist`
 
 #### 3. Quickly serve
 
-Run following to quickly setup and run [simple-http-server](https://github.com/TheWaWaR/simple-http-server) (will bind to http://127.0.0.1:8080/index.html):
+Run following to quickly setup and run [simple-http-server](https://github.com/TheWaWaR/simple-http-server) (will bind to http://127.0.0.1:8080/):
 
 ```
-just run
-```
-
-
-## Other
-
-### Tests
-
-To run tests in browsers (start a webserver on localhost:8000)
-
-```
-just test
+cargo xtask serve-web-dist
 ```
 
 
