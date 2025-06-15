@@ -201,10 +201,14 @@ where F: FnMut(&Path) -> () + 'a
 
 
 pub fn copy_file_tree_filtered(from_dir: &Path, dest_dir: &Path, extensions: &[&[u8]], white_list: bool) -> TaskResult {
-    log::debug!(
-        "[xtask] Copying all {:?} from {} to {}", 
-        extensions.iter().map(|e| String::from_utf8_lossy(e)).collect::<Vec<_>>(), from_dir.display(), dest_dir.display()
+    log::info!(
+        "[xtask] Copying all{} {:?} from {} to {}", 
+        (if white_list {""} else {" besides"}), 
+        extensions.iter().map(|e| String::from_utf8_lossy(e)).collect::<Vec<_>>(), 
+        from_dir.display(), 
+        dest_dir.display()
     );
+    
     let full_from_dir = from_dir.canonicalize()?;
 
     for_each_file_recursively(&full_from_dir, |relative_path| {

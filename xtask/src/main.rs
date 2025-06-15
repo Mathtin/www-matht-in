@@ -11,7 +11,7 @@ use web_dist::{
     serve_web_distribution_dev
 };
 use std::{
-    collections::HashMap, env, io::Error
+    collections::HashMap, env, io::Error, sync::LazyLock
 };
 
 
@@ -21,8 +21,9 @@ type TaskDescription<'a> = &'a str;
 
 type TasksEntry<'a> = (TaskFn, TaskDescription<'a>);
 type TasksListEntry<'a> = (TaskKey<'a>, TasksEntry<'a>);
+type TasksCompactMap<'a> = HashMap<TaskKey<'a>, &'a TaskFn>;
 
-static TASKS_LIST: [TasksListEntry; 9] = [
+static TASKS_LIST: &[TasksListEntry] = &[
     ("build-web-dist",          (build_web_distribution,        "build distribution for web (HTML + WASM)")),
     ("serve-web-dist",          (serve_web_distribution,        "serve distribution for web on http://127.0.0.1:8080")),
     ("build-windows-dist",      (todo_placeholder,              "build distribution for windows (x64 exe)")),
@@ -36,6 +37,12 @@ static TASKS_LIST: [TasksListEntry; 9] = [
     ("help",                    (print_help,                    "print help (this) message")),
 ];
 
+static TASKS_MAP: LazyLock<TasksCompactMap> = LazyLock::new(||
+    TASKS_LIST.iter()
+        .map(|(cmd, (f, _))| (*cmd, f))
+        .collect()
+);
+
 
 fn main() {
     log::init_log();
@@ -48,16 +55,13 @@ fn main() {
 
 fn try_main() -> Result<(), Error> {
     make_all_directories(&BUILD_PATH)?;
-    
-    let existing_tasks = HashMap::from(TASKS_LIST);
+
     let chosen_task = env::args().nth(1);
 
     match chosen_task.as_deref() {
         Some(task_name) => (
-            existing_tasks.get(task_name)
-                .map(|(f, _)| f)
-                .unwrap_or(&(print_help as TaskFn))
-        )()?,
+            TASKS_MAP.get(task_name).unwrap_or(&&(print_help as TaskFn))
+        )()?, // get task from map and call
         _ => print_help()?,
     }
     
@@ -74,7 +78,9 @@ fn print_help() -> Result<(), Error> {
     let task_table = TASKS_LIST.iter()
         .map(|(name, (_, desc))| format!("{:width$}{}", name, desc, width=task_width))
         .fold(String::new(), |line1, line2| line1 + "\n" + &line2);
+
     eprintln!("Tasks:\n{}", task_table);
+
     Ok(())
 }
 
