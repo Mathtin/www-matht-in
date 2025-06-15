@@ -26,7 +26,7 @@ pub static BUILD_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
 
 
 pub fn make_each_directory(path: &Path) -> TaskResult {
-    log::debug!("[xtask] making branch: {}", path.display());
+    log::debug!("[xtask] making each directory in {}", path.display());
 
     if ! path.exists() {
         fs::create_dir_all(path)?;
@@ -134,8 +134,11 @@ pub fn cargo(args: &[&str]) -> Result<(), Error> {
 }
 
 
-fn for_each_file_only<'a, F>(
-    path: &'a Path,
+/// Pop files into `f` and pass dirs through
+/// 
+/// Note: `f` receives path relative to `base_dir`
+fn pop_files<'a, F>(
+    base_dir: &'a Path,
     listing: fs::ReadDir,
     f: &'a RefCell<F>,
 ) -> impl Iterator<Item = PathBuf> + 'a
@@ -156,7 +159,7 @@ where
                             return None;
                         },
                     };
-                    let relative_path = full_path.strip_prefix(path)
+                    let relative_path = full_path.strip_prefix(base_dir)
                         .expect("failed to remove path prefix") // can this even happen?
                         .to_owned();
                     // Only place where we do the borrow
@@ -181,32 +184,41 @@ where
 }
 
 
-pub fn for_each_file_recursively<'a, F>(dir: &Path, for_each_fn: F) -> TaskResult
+/// DFS throughout `base_dir` based on lazy iterators
+/// 
+/// Note: `f` receives path relative to `base_dir`
+pub fn for_each_file_recursively<'a, F>(base_dir: &Path, f: F) -> TaskResult
 where
     F: FnMut(&Path) -> () + 'a,
 {
-    let for_each_fn = RefCell::new(for_each_fn);
-    let listing = fs::read_dir(dir)?;
-    let mut remaining_dir_iterators = {
-        let dir_iterators = for_each_file_only(dir, listing, &for_each_fn);
-        vec![dir_iterators]
+    // Note: pop_files returns iterator of directories
+
+    // Wrap for multiple mutable borrows inside pop_files
+    let f = RefCell::new(f);
+    let base_listing = fs::read_dir(base_dir)?;
+    let mut remaining_dirs_iterators = {
+        let inner_dirs_iterator = pop_files(base_dir, base_listing, &f);
+        vec![inner_dirs_iterator]
     };
 
-    while let Some(mut dirs) = remaining_dir_iterators.pop() {
-        let listing = match dirs.next() {
-            Some(dir) => match fs::read_dir(&dir) {
-                Ok(listing) => listing,
-                Err(e) => {
-                    log::error!("[xtask] Failed to list {}: {}", dir.display(), e);
-                    continue;
+    // DFS loop (pop stack top)
+    while let Some(mut dirs) = remaining_dirs_iterators.pop() {
+        match dirs.next() {
+            Some(dir) => {
+                log::debug!("[xtask] processing recursively dir {}", dir.display());
+                // bring parent level file-iterator back first
+                remaining_dirs_iterators.push(dirs);
+                match fs::read_dir(&dir) {
+                    Ok(listing) => {
+                        let inner_dirs = pop_files(base_dir, listing, &f);
+                        // push child level file-iterator after parent level one (this makes it DFS)
+                        remaining_dirs_iterators.push(inner_dirs);
+                    },
+                    Err(e) => log::error!("[xtask] Failed to list {}: {}", dir.display(), e),
                 }
             },
-            None => continue,
-            };
-
-        let inner_dirs = for_each_file_only(dir, listing, &for_each_fn);
-
-        remaining_dir_iterators.push(inner_dirs);
+            None => (),
+        };
     }
 
     Ok(())
