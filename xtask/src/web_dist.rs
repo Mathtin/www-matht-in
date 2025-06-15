@@ -133,7 +133,7 @@ fn minify_swarm(input: &Path, output: &Path) -> TaskResult {
             while handles.len() >= available_parallelism {
                 let extracted = handles
                     .extract_if(.., |h: &mut thread::ScopedJoinHandle<TaskResult>| {
-                        !h.is_finished()
+                        h.is_finished()
                     })
                     .count();
                 if extracted == 0 { 
