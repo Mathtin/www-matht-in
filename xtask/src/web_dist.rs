@@ -96,6 +96,8 @@ fn serve_web_distribution_by_path(web_dist_path: &Path) -> TaskResult {
 
 fn minify_swarm(input: &Path, output: &Path) -> TaskResult {
     let available_parallelism = thread::available_parallelism()?.get();
+    // (1)
+    assert!(available_parallelism > 0, "0 parallelism?!");
     thread::scope(|s| {
         let mut handles = vec![];
         for_each_file_recursively(input, |relative_path| {
@@ -105,10 +107,13 @@ fn minify_swarm(input: &Path, output: &Path) -> TaskResult {
                 Some(ext) if ! MINIFY_EXTENSIONS.contains(&ext) => return,
                 Some(_) => {},  // extension check passed
             }
-            // wait for thread pool
+            // wait for thread pool, always have handles to extract because of (1)
             while handles.len() >= available_parallelism {
-                handles.extract_if(.., |h: &mut thread::ScopedJoinHandle<TaskResult>| !h.is_finished()).count();
-                thread::sleep(Duration::from_millis(1));
+                let extracted = handles.extract_if(.., |h: &mut thread::ScopedJoinHandle<TaskResult>| !h.is_finished())
+                    .count();
+                if extracted == 0 { 
+                    thread::sleep(Duration::from_millis(1));
+                }
             }
             // make necessary directories
             let from_path = input.join(relative_path);
