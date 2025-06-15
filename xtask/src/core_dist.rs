@@ -105,7 +105,7 @@ pub fn shell(cmd: &str, args: &[&str], log_piped: bool) -> Result<ExitStatus, Er
     thread::scope(|s| {
         let h = s.spawn(|| log_pipe(&cmd, &mut stderr, false));
         if let Err(e) = log_pipe(&cmd, &mut stdout, true) {
-            log::error!("[shell] error occurred while piping shell stdout: {}", e)
+            log::error!("[shell] error occurred while piping shell stdout: {}", e);
         }
         match h.join() {
             Ok(Err(e)) => log::error!("[shell] error occurred while piping shell stderr: {}", e),
@@ -208,7 +208,7 @@ pub fn copy_file_tree_filtered(from_dir: &Path, dest_dir: &Path, extensions: &[&
         from_dir.display(), 
         dest_dir.display()
     );
-    
+
     let full_from_dir = from_dir.canonicalize()?;
 
     for_each_file_recursively(&full_from_dir, |relative_path| {
