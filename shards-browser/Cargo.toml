@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["mathtin"]
 edition = "2024"
 
+[package.metadata.wasm-pack.profile.release] 
+wasm-opt = ["-O", "--enable-bulk-memory", "--enable-mutable-globals"]
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 
@@ -17,11 +20,11 @@ wgpu = { version = "24.0.5", default-features = false }
 winit = { version = "0.30.11", features = ["android-native-activity"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-# Native Immidiate GUI
+# Native Immediate GUI
 egui-winit = "0.31.1"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-# Web Platform Immidiate GUI
+# Web Platform Immediate GUI
 egui-winit = { version = "0.31.1", default-features = false }
 # Web API Bindings
 wasm-bindgen = "0.2.100"
@@ -36,8 +39,5 @@ webgl = ["wgpu/webgl"]
 webgpu = ["wgpu/webgpu"]
 
 [profile.release]
-codegen-units = 1 # Reduce parallel code generation units
-strip = true      # Automatically strip symbols from the binary.
-opt-level = "z"   # Optimize for size
-lto = true        # Link time optimization
 panic = "abort"   # On panic, abort immediately rather than unwinding.
+lto = true        # Link time optimization

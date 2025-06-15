@@ -56,7 +56,7 @@ fn log_pipe(proc_name: &str, pipe: &mut impl Read, is_stdout: bool) -> Result<()
             },
             // If line buffer filled up (flush)
             Ok(_) if line_remaining_part.len() == 1 => {
-                log::info!("[{} {}] {}", proc_name, prefix, String::from_utf8_lossy(&line_filled_part));
+                log::info!("[{} {}] {}", proc_name, prefix, String::from_utf8_lossy(&line_buffer));
                 0
             },
             // else accumulate
@@ -74,17 +74,19 @@ fn log_pipe(proc_name: &str, pipe: &mut impl Read, is_stdout: bool) -> Result<()
 }
 
 
-pub fn shell_log_piped(cmd: &str, args: &[&str]) -> Result<ExitStatus, Error> {
-    shell(cmd, args, true)
+pub fn shell_log_piped(cmd: &str, args: &[&str], env: &[(&str, &str)]) -> Result<ExitStatus, Error> {
+    shell(cmd, args, env, true)
 }
 
 
-pub fn shell(cmd: &str, args: &[&str], log_piped: bool) -> Result<ExitStatus, Error> {
+pub fn shell(cmd: &str, args: &[&str], env: &[(&str, &str)], log_piped: bool) -> Result<ExitStatus, Error> {
     let mut shell_command = Command::new(cmd);
 
     shell_command
         .current_dir(PROJECT_ROOT.clone())
         .args(args);
+
+    env.iter().for_each(|(k, v)| {shell_command.env(k, v);});
 
     log::debug!("[shell] $ {} {:?}", cmd, args);
 
@@ -124,7 +126,7 @@ pub fn shell(cmd: &str, args: &[&str], log_piped: bool) -> Result<ExitStatus, Er
 
 pub fn cargo(args: &[&str]) -> Result<(), Error> {
     let cargo = env::var("CARGO").unwrap_or_else(|_| "cargo".to_string());
-    let status = shell(&cargo, args, true)?;
+    let status = shell(&cargo, args, &[], true)?;
 
     if ! status.success() {
         Err(Error::from(ErrorKind::Interrupted))

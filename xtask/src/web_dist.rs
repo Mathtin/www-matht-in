@@ -1,3 +1,4 @@
+use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 use std::thread;
@@ -54,24 +55,30 @@ pub fn serve_web_distribution_dev() -> TaskResult {
 fn build_web_distribution_by_path(
     web_dist_path: &Path,
     wasm_pkg_path: &Path,
-    do_minify: bool,
+    release: bool,
 ) -> TaskResult {
     cargo(&["install", WASM_PACK])?;
 
     make_each_directory(&web_dist_path)?;
 
     let wasm_pkg_path_arg = wasm_pkg_path.to_string_lossy();
+    let wasm_pack_args: &[&str] = if release {
+        &["--verbose", "build", "shards-browser", "--target", "web", "--out-dir", &wasm_pkg_path_arg]
+    } else {
+        &["--verbose", "build", "shards-browser", "--dev", "--target", "web", "--out-dir", &wasm_pkg_path_arg]
+    };
 
-    shell_log_piped("wasm-pack", &[
-        "--verbose", 
-        "build", "shards-browser", 
-        "--target", "web", 
-        "--out-dir", &wasm_pkg_path_arg,
-    ])?;
+    if ! shell_log_piped(
+        "wasm-pack", 
+        wasm_pack_args, 
+        &[("RUSTFLAGS", "-Ctarget-cpu=mvp")]
+    )?.success() {
+        return Err(Error::from(ErrorKind::Interrupted));
+    };
 
     let front_page_path = PROJECT_ROOT.join(FRONT_PAGE_DIR);
 
-    if do_minify {
+    if release {
         cargo(&["install", MINHTML])?;
         // copy all wasm modules and js-bindings
         copy_file_tree_filtered(wasm_pkg_path, web_dist_path, &[b"js", b"wasm"], true)?;
@@ -96,7 +103,12 @@ fn serve_web_distribution_by_path(web_dist_path: &Path) -> TaskResult {
 
     let web_dist_path_str = web_dist_path.to_string_lossy();
 
-    shell(HTTP_SERVER, &["--nocache", "-i", "-p", "8080", "--ip", "127.0.0.1", &web_dist_path_str], false)?;
+    shell(
+        HTTP_SERVER, 
+        &["--nocache", "-i", "-p", "8080", "--ip", "127.0.0.1", &web_dist_path_str], 
+        &[],
+        false
+    )?;
 
     Ok(())
 }
@@ -178,10 +190,13 @@ fn minify(input: &Path, output: &Path) -> TaskResult {
     let output = output.to_str().unwrap_or_default();
     let input = input.to_str().unwrap_or_default();
 
-    shell_log_piped(
+    if ! shell_log_piped(
         "minhtml",
         &["--minify-css", "--minify-js", "-o", output, input],
-    )?;
+        &[]
+    )?.success() {
+        return Err(Error::from(ErrorKind::Interrupted));
+    };
 
     Ok(())
 }

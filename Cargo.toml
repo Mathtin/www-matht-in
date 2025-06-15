@@ -11,4 +11,6 @@ members = [
 opt-level = "s"
 
 [profile.release.package.shards-browser]
-opt-level = "s"
+codegen-units = 1 # Reduce parallel code generation units
+strip = true      # Automatically strip symbols from the binary.
+opt-level = "z"   # Optimize for size

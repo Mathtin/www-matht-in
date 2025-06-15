@@ -48,10 +48,7 @@
       {
         "label": "Serve Developer Web Build",
         "type": "shell",
-        "command": "just run-dev",
-        "windows": {
-          "command": "cargo xtask serve-web-dist-dev"
-        },
+        "command": "cargo xtask serve-web-dist-dev",
         "group": {
           "kind": "test",
         },

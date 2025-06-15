@@ -1,8 +1,18 @@
 {
     "rust-analyzer.cargo.target": "wasm32-unknown-unknown",
     "cSpell.words": [
+        "bindgen",
+        "cdylib",
+        "egui",
         "MATHT",
+        "mathtin",
         "minhtml",
+        "rlib",
+        "RUSTFLAGS",
+        "webgl",
+        "webgpu",
+        "wgpu",
+        "winit",
         "xtask"
     ]
 }
