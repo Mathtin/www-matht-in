@@ -104,7 +104,6 @@ fn serve_web_distribution_by_path(web_dist_path: &Path) -> TaskResult {
 
 fn minify_swarm(input: &Path, output: &Path) -> TaskResult {
     let available_parallelism = thread::available_parallelism()?.get();
-    // (1)
     assert!(available_parallelism > 0, "0 parallelism?!");
     thread::scope(|s| {
         let mut handles = vec![];
@@ -118,7 +117,7 @@ fn minify_swarm(input: &Path, output: &Path) -> TaskResult {
                 Some(ext) if !MINIFY_EXTENSIONS.contains(&ext) => return,
                 Some(_) => {} // extension check passed
             }
-            // wait for thread pool, always have handles to extract because of (1)
+            // Note: available_parallelism is always > 0
             while handles.len() >= available_parallelism {
                 let extracted = handles
                     .extract_if(.., |h: &mut thread::ScopedJoinHandle<TaskResult>| {
@@ -129,10 +128,9 @@ fn minify_swarm(input: &Path, output: &Path) -> TaskResult {
                     thread::sleep(Duration::from_millis(1));
                 }
             }
-            // make necessary directories
+            // minify in thread
             let from_path = input.join(relative_path);
             let dest_path = output.join(relative_path);
-            // minify in thread
             let h = s.spawn(move || minify(&from_path, &dest_path));
             handles.push(h);
         })
