@@ -1,5 +1,6 @@
 use std::{
-    env, fs::{self, ReadDir},
+    cell::RefCell,
+    env, fs,
     io::{Error, ErrorKind, Read},
     path::{Path, PathBuf},
     process::{Command, ExitStatus, Stdio},
@@ -31,7 +32,7 @@ pub fn make_all_directories(path: &Path) -> TaskResult {
         fs::create_dir_all(path)?;
         log::info!("[xtask] directory created");
     } else if ! path.is_dir() {
-        return Err(std::io::Error::from(ErrorKind::NotADirectory));
+        return Err(Error::from(ErrorKind::NotADirectory));
     } else {
         log::debug!("[xtask] directory already exists");
     }
@@ -133,16 +134,20 @@ pub fn cargo(args: &[&str]) -> Result<(), Error> {
 }
 
 
-fn for_each_file_only<'a, F>(path: &'a Path, listing: ReadDir, f: &'a mut F) -> impl Iterator<Item=PathBuf> + 'a
-where F: FnMut(&Path) -> (),
+fn for_each_file_only<'a, F>(
+    path: &'a Path,
+    listing: fs::ReadDir,
+    f: &'a RefCell<F>,
+) -> impl Iterator<Item = PathBuf> + 'a
+where
+    F: FnMut(&Path) -> () + 'a,
 {
     return listing.filter_map(move |entry| {
-        match entry 
-        {
+        match entry {
             // entry available
             Ok(entry) => match entry.file_type() {
                 // is file (callback and skip)
-                Ok(fd) if ! fd.is_dir() => {
+                Ok(fd) if !fd.is_dir() => {
                     // calc relative path
                     let full_path = match entry.path().canonicalize() {
                         Ok(full_path) => full_path,
@@ -154,7 +159,8 @@ where F: FnMut(&Path) -> (),
                     let relative_path = full_path.strip_prefix(path)
                         .expect("failed to remove path prefix") // can this even happen?
                         .to_owned();
-                    f(&relative_path);
+                    // Only place where we do the borrow
+                    f.borrow_mut()(&relative_path);
                     None
                 },
                 // is dir (pass further as path)
@@ -175,25 +181,32 @@ where F: FnMut(&Path) -> (),
 }
 
 
-pub fn for_each_file_recursively<'a, F>(dir: &Path, mut for_each_fn: F) -> TaskResult
-where F: FnMut(&Path) -> () + 'a
+pub fn for_each_file_recursively<'a, F>(dir: &Path, for_each_fn: F) -> TaskResult
+where
+    F: FnMut(&Path) -> () + 'a,
 {
+    let for_each_fn = RefCell::new(for_each_fn);
     let listing = fs::read_dir(dir)?;
-    let mut remaining_listings = vec![listing];
+    let mut remaining_dir_iterators = {
+        let dir_iterators = for_each_file_only(dir, listing, &for_each_fn);
+        vec![dir_iterators]
+    };
 
-    while let Some(listing) = remaining_listings.pop() {
-        let inner_dirs = for_each_file_only(dir, listing, &mut for_each_fn);
-
-        for path in inner_dirs {
-            let listing = match fs::read_dir(&path) {
-                Ok(it) => it,
+    while let Some(mut dirs) = remaining_dir_iterators.pop() {
+        let listing = match dirs.next() {
+            Some(dir) => match fs::read_dir(&dir) {
+                Ok(listing) => listing,
                 Err(e) => {
-                    log::error!("[xtask] Error occurred while listing {}: {}", path.display(), e);
+                    log::error!("[xtask] Failed to list {}: {}", dir.display(), e);
                     continue;
-                },
+                }
+            },
+            None => continue,
             };
-            remaining_listings.push(listing);
-        }
+
+        let inner_dirs = for_each_file_only(dir, listing, &for_each_fn);
+
+        remaining_dir_iterators.push(inner_dirs);
     }
 
     Ok(())
