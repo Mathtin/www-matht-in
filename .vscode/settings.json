@@ -3,6 +3,8 @@
     "cSpell.words": [
         "bindgen",
         "cdylib",
+        "codegen",
+        "Ctarget",
         "egui",
         "MATHT",
         "mathtin",

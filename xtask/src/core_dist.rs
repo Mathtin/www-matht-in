@@ -102,8 +102,8 @@ pub fn shell(cmd: &str, args: &[&str], env: &[(&str, &str)], log_piped: bool) ->
         .stderr(Stdio::piped())
         .spawn()?;
 
-    let mut stdout = shell_process.stdout.take().expect("failed to aquire piped stdout");
-    let mut stderr = shell_process.stderr.take().expect("failed to aquire piped stderr");
+    let mut stdout = shell_process.stdout.take().expect("failed to acquire piped stdout");
+    let mut stderr = shell_process.stderr.take().expect("failed to acquire piped stderr");
 
     thread::scope(|s| {
         let h = s.spawn(|| log_pipe(&cmd, &mut stderr, false));

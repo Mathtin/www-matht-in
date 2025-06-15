@@ -12,7 +12,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 log = { package = "shards-logger", path = "../shards-logger" }
-# Basic Immidiate GUI
+# Basic Immediate GUI
 egui = "0.31.1"
 egui-wgpu = { version = "0.31.1", features = ["winit"] }
 # Basic Graphics Stack
