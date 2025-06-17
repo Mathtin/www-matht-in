@@ -1,5 +1,6 @@
 use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
+use std::sync::mpsc;
 use std::sync::LazyLock;
 use std::thread;
 use std::time::Duration;
@@ -117,8 +118,24 @@ fn serve_web_distribution_by_path(web_dist_path: &Path) -> TaskResult {
 fn minify_swarm(input: &Path, output: &Path) -> TaskResult {
     let available_parallelism = thread::available_parallelism()?.get();
     assert!(available_parallelism > 0, "0 parallelism?!");
+
+    type MinifyTask = (PathBuf, PathBuf);
+    type MinifyPipe = (mpsc::SyncSender<MinifyTask>, mpsc::Receiver<MinifyTask>);
+    let pipes: Vec<MinifyPipe> = (0..available_parallelism).map(|_| mpsc::sync_channel(1)).collect();
+
     thread::scope(|s| {
-        let mut handles = vec![];
+
+        let pool: Vec<(mpsc::SyncSender<MinifyTask>, _)> = pipes.into_iter()
+            .map(|(sender, receiver)| (sender, s.spawn(
+                // thread listening pipe
+                move || while let Ok((input, output)) = receiver.recv() {
+                    if let Err(e) = minify(&input, &output) {
+                        log::error!("[xtask] failed to call minify {} > {}: {}", input.display(), output.display(), e);
+                    }
+                })
+            ))
+            .collect();
+
         for_each_file_recursively(input, |relative_path| {
             // check extension
             match relative_path
@@ -129,23 +146,18 @@ fn minify_swarm(input: &Path, output: &Path) -> TaskResult {
                 Some(ext) if !MINIFY_EXTENSIONS.contains(&ext) => return,
                 Some(_) => {} // extension check passed
             }
-            // Note: available_parallelism is always > 0
-            while handles.len() >= available_parallelism {
-                let extracted = handles
-                    .extract_if(.., |h: &mut thread::ScopedJoinHandle<TaskResult>| {
-                        h.is_finished()
-                    })
-                    .count();
-                if extracted == 0 { 
-                    thread::sleep(Duration::from_millis(1));
-                }
-            }
-            // minify in thread
+
             let from_path = input.join(relative_path);
             let dest_path = output.join(relative_path);
-            let h = s.spawn(move || minify(&from_path, &dest_path));
-            handles.push(h);
+
+            let try_send = move |(p, _): &(mpsc::SyncSender<MinifyTask>, _)| p.try_send((from_path.clone(), dest_path.clone())).is_ok();
+            // try push loop
+            while ! pool.iter().any(&try_send)
+            {
+                thread::sleep(Duration::from_millis(1));
+            };
         })
+
     })
 }
 
