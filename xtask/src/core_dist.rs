@@ -4,7 +4,6 @@ use std::{
     io::{Error, ErrorKind, Read},
     path::{Path, PathBuf},
     process::{Command, ExitStatus, Stdio},
-    sync::LazyLock,
     thread,
 };
 
@@ -12,17 +11,6 @@ use crate::paths;
 
 
 pub type TaskResult = Result<(), Error>;
-
-pub static PROJECT_ROOT: LazyLock<&Path> = LazyLock::new(|| {
-    Path::new(&env!("CARGO_MANIFEST_DIR"))
-        .ancestors()
-        .nth(1)
-        .unwrap()
-});
-
-pub static BUILD_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
-    PROJECT_ROOT.join(paths::BUILD_DIRECTORY)
-});
 
 
 pub fn make_each_directory(path: &Path) -> TaskResult {
@@ -94,25 +82,33 @@ fn shell(cmd: &str, args: &[&str], env: &[(&str, &str)], transparent: bool) -> R
     let mut shell_command = Command::new(cmd);
 
     shell_command
-        .current_dir(PROJECT_ROOT.clone())
+        .current_dir(paths::PROJECT_ROOT.clone())
         .args(args);
 
     env.iter().for_each(|(k, v)| {shell_command.env(k, v);});
 
-    log::debug!("[shell] $ {} {:?}", cmd, args);
+    if log::log_enabled!(log::Level::Debug) {
+        let env_table = env.iter()
+            .map(|(k, v)| format!("{}=\"{}\" ", k, v))
+            .fold(String::new(), |mut e , l| {e.push_str(l.as_str()); e});
+        log::debug!("[shell] $ {} {} {:?}", env_table, cmd, args);
+    }
 
     if transparent {
+        // Spawn with transparent io
         return shell_command
             .stdout(Stdio::inherit())
             .stderr(Stdio::inherit())
             .status();
     }
 
+    // Spawn with piped io
     let mut shell_process = shell_command
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?;
 
+    // Pipe output into log (with stderr in separate thread)
     let mut stdout = shell_process.stdout.take().expect("failed to acquire piped stdout");
     let mut stderr = shell_process.stderr.take().expect("failed to acquire piped stderr");
 
@@ -128,6 +124,7 @@ fn shell(cmd: &str, args: &[&str], env: &[(&str, &str)], transparent: bool) -> R
         }
     });
 
+    // Collect exit status and exit
     let status = shell_process.wait()?;
     log::debug!("[shell] {} process exited with {}", cmd, status);
     
@@ -141,7 +138,7 @@ pub fn cargo(args: &[&str]) -> TaskResult {
 }
 
 
-/// Pop files into `f` and pass dirs through
+/// Pop files into `f` and pass dirs through (lazy)
 /// 
 /// Note: `f` receives path relative to `base_dir`
 fn pop_files<'a, F>(
@@ -211,17 +208,17 @@ where
     // DFS loop (pop stack top)
     while let Some(mut dirs) = remaining_dirs_iterators.pop() {
         match dirs.next() {
-            Some(dir) => {
-                log::debug!("[xtask] processing recursively dir {}", dir.display());
+            Some(new_dir) => {
+                log::debug!("[xtask] processing recursively dir {}", new_dir.display());
                 // bring parent level file-iterator back first
                 remaining_dirs_iterators.push(dirs);
-                match fs::read_dir(&dir) {
+                match fs::read_dir(&new_dir) {
                     Ok(listing) => {
                         let inner_dirs = pop_files(base_dir, listing, &f);
                         // push child level file-iterator after parent level one (this makes it DFS)
                         remaining_dirs_iterators.push(inner_dirs);
                     },
-                    Err(e) => log::error!("[xtask] Failed to list {}: {}", dir.display(), e),
+                    Err(e) => log::error!("[xtask] Failed to list {}: {}", new_dir.display(), e),
                 }
             },
             None => (),
@@ -283,4 +280,30 @@ pub fn copy_file_tree_filtered(
             Ok(_) => {},
         }
     })
+}
+
+
+pub fn relative_path_depth(path: &Path) -> usize {
+    assert!(path.is_relative());
+    let mut depth = 0;
+    let mut path = path;
+    while let Some(parent) = path.parent() {
+        depth += 1;
+        path = parent;
+    }
+    depth
+}
+
+
+pub fn cut_path_children(path: &Path, depth: usize) -> Option<&Path> {
+    if depth == 0 {
+        return Some(path);
+    }
+
+    let mut path = path;
+    for _ in 0..depth {
+        path = path.parent()?;
+    }
+
+    Some(path)
 }

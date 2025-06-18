@@ -5,7 +5,7 @@ use std::thread;
 use std::time::Duration;
 
 use crate::core_dist::{
-    cargo, contains_any_extension, copy_file_tree_filtered, for_each_file_recursively, make_each_directory, shell_log_piped, transparent_shell, TaskResult, BUILD_PATH, PROJECT_ROOT
+    cargo, contains_any_extension, copy_file_tree_filtered, cut_path_children, for_each_file_recursively, make_each_directory, relative_path_depth, shell_log_piped, transparent_shell, TaskResult
 };
 use crate::paths;
 
@@ -17,36 +17,37 @@ const FRONT_PAGE_DIR: &str = "front-page";
 const ERROR_PAGE_SUBDIR: &str = "error_pages";
 const HIDDEN_ERROR_PAGE_DIR: &str = ".error_pages";
 
-static ERROR_PAGE_PATH: LazyLock<PathBuf> =
-    LazyLock::new(|| PROJECT_ROOT.join(FRONT_PAGE_DIR).join(ERROR_PAGE_SUBDIR));
-
 const MINIFY_EXTENSIONS: &[&[u8]] = &[b"html", b"css", b"js"];
+
+const MINIFY_DIR_RENAMING: LazyLock<[(PathBuf, PathBuf); 1]> = LazyLock::new(|| [
+    (paths::PROJECT_ROOT.join(FRONT_PAGE_DIR).join(ERROR_PAGE_SUBDIR), PathBuf::from(HIDDEN_ERROR_PAGE_DIR)),
+]);
 
 
 pub fn build_web_distribution() -> TaskResult {
-    let web_dist_path = BUILD_PATH.join(paths::WEB_DIST_SUBDIRECTORY);
-    let wasm_pkg_path = BUILD_PATH.join(paths::WASM_PKG_SUBDIRECTORY);
+    let web_dist_path = paths::BUILD_PATH.join(paths::WEB_DIST_SUBDIRECTORY);
+    let wasm_pkg_path = paths::BUILD_PATH.join(paths::WASM_PKG_SUBDIRECTORY);
     build_web_distribution_by_path(&web_dist_path, &wasm_pkg_path, true)
 }
 
 
 pub fn serve_web_distribution() -> TaskResult {
     build_web_distribution()?;
-    let web_dist_path = BUILD_PATH.join(paths::WEB_DIST_SUBDIRECTORY);
+    let web_dist_path = paths::BUILD_PATH.join(paths::WEB_DIST_SUBDIRECTORY);
     serve_web_distribution_by_path(&web_dist_path)
 }
 
 
 pub fn build_web_distribution_dev() -> TaskResult {
-    let web_dist_path = BUILD_PATH.join(paths::WEB_DIST_DEV_SUBDIRECTORY);
-    let wasm_pkg_path = BUILD_PATH.join(paths::WASM_PKG_DEV_SUBDIRECTORY);
+    let web_dist_path = paths::BUILD_PATH.join(paths::WEB_DIST_DEV_SUBDIRECTORY);
+    let wasm_pkg_path = paths::BUILD_PATH.join(paths::WASM_PKG_DEV_SUBDIRECTORY);
     build_web_distribution_by_path(&web_dist_path, &wasm_pkg_path, false)
 }
 
 
 pub fn serve_web_distribution_dev() -> TaskResult {
     build_web_distribution_dev()?;
-    let web_dist_path = BUILD_PATH.join(paths::WEB_DIST_DEV_SUBDIRECTORY);
+    let web_dist_path = paths::BUILD_PATH.join(paths::WEB_DIST_DEV_SUBDIRECTORY);
     serve_web_distribution_by_path(&web_dist_path)
 }
 
@@ -73,7 +74,7 @@ fn build_web_distribution_by_path(
         &[("RUSTFLAGS", "-Ctarget-cpu=mvp")]
     )?;
 
-    let front_page_path = PROJECT_ROOT.join(FRONT_PAGE_DIR);
+    let front_page_path = paths::PROJECT_ROOT.join(FRONT_PAGE_DIR);
 
     if release {
         cargo(&["install", MINHTML])?;
@@ -153,49 +154,51 @@ fn minify_swarm(input: &Path, output: &Path) -> TaskResult {
 }
 
 
-fn minify(input: &Path, output: &Path) -> TaskResult {
-    let names_equal = |path: &Path, name: &str| {
-        path.file_name()
-            .filter(|n| n.as_encoded_bytes() == name.as_bytes())
-            .is_some()
-    };
+fn minify(full_input: &Path, full_output: &Path) -> TaskResult {
+    assert!(full_input.is_absolute());
+    assert!(full_output.is_absolute());
 
     // Inject error directory renaming
-    let injected_path;
-    let output = match input.parent() {
-        // if input is PROJECT_ROOT/FRONT_PAGE_DIR/ERROR_PAGE_SUBDIR/file
-        Some(p) if p == *ERROR_PAGE_PATH => match output.parent() {
-            // if dest is .../ERROR_PAGE_SUBDIR/file
-            Some(output_parent) if names_equal(output_parent, ERROR_PAGE_SUBDIR) => {
-                match output_parent.parent() {
-                Some(output_parent_parent) => {
-                        injected_path = output_parent_parent.join(HIDDEN_ERROR_PAGE_DIR).join(
-                            output
-                                .file_name()
-                                .expect("output path should point to file"),
-                        );
-                    &injected_path
-                    }
-                None => output,
-                }
-            }
-            Some(_) => output,
-            None => output,
-        },
-        Some(_) => output,
-        None => output,
-    };
+    let full_output = handle_minify_directory_renaming(&full_input, &full_output);
 
-    if let Some(dest_path_parent) = output.parent() {
+    if let Some(dest_path_parent) = full_output.parent() {
         make_each_directory(dest_path_parent)?;
     }
 
-    let output = output.to_str().unwrap_or_default();
-    let input = input.to_str().unwrap_or_default();
+    let full_output = full_output.to_str().unwrap_or_default();
+    let full_input = full_input.to_str().unwrap_or_default();
 
     shell_log_piped(
         "minhtml",
-        &["--minify-css", "--minify-js", "-o", output, input],
+        &["--minify-css", "--minify-js", "-o", full_output, full_input],
         &[]
     )
+}
+
+
+fn handle_minify_directory_renaming(full_input: &Path, full_output: &Path) -> PathBuf {
+    assert!(full_input.is_absolute());
+    assert!(full_output.is_absolute());
+
+    match MINIFY_DIR_RENAMING.iter()
+            // Find by trying stripping prefix of input dir and taking first successful
+            .filter_map(
+                |(path, renamed_path)| full_input
+                    .strip_prefix(path)
+                    .ok()
+                    .map(|v| (v, renamed_path))
+            )
+            .next()
+    {
+        Some((relative_path, renamed_path)) => {
+            let renamed_relative_output = renamed_path.join(relative_path);
+            let cut_depth = relative_path_depth(&renamed_relative_output);
+            if let Some(output_base) = cut_path_children(full_output, cut_depth) {
+                output_base.join(renamed_relative_output)
+            } else {
+                full_output.to_owned()
+            }
+        },
+        None => full_output.to_owned(),
+    }
 }
