@@ -74,12 +74,23 @@ fn log_pipe(proc_name: &str, pipe: &mut impl Read, is_stdout: bool) -> Result<()
 }
 
 
-pub fn shell_log_piped(cmd: &str, args: &[&str], env: &[(&str, &str)]) -> Result<ExitStatus, Error> {
+pub fn shell_log_piped(cmd: &str, args: &[&str], env: &[(&str, &str)]) -> TaskResult {
+    let status = shell(cmd, args, env, false)?;
+
+    if ! status.success() {
+        Err(Error::from(ErrorKind::Interrupted))
+    } else {
+        Ok(())
+    }
+}
+
+
+pub fn transparent_shell(cmd: &str, args: &[&str], env: &[(&str, &str)]) -> Result<ExitStatus, Error> {
     shell(cmd, args, env, true)
 }
 
 
-pub fn shell(cmd: &str, args: &[&str], env: &[(&str, &str)], log_piped: bool) -> Result<ExitStatus, Error> {
+fn shell(cmd: &str, args: &[&str], env: &[(&str, &str)], transparent: bool) -> Result<ExitStatus, Error> {
     let mut shell_command = Command::new(cmd);
 
     shell_command
@@ -90,7 +101,7 @@ pub fn shell(cmd: &str, args: &[&str], env: &[(&str, &str)], log_piped: bool) ->
 
     log::debug!("[shell] $ {} {:?}", cmd, args);
 
-    if ! log_piped {
+    if transparent {
         return shell_command
             .stdout(Stdio::inherit())
             .stderr(Stdio::inherit())
@@ -124,15 +135,9 @@ pub fn shell(cmd: &str, args: &[&str], env: &[(&str, &str)], log_piped: bool) ->
 }
 
 
-pub fn cargo(args: &[&str]) -> Result<(), Error> {
+pub fn cargo(args: &[&str]) -> TaskResult {
     let cargo = env::var("CARGO").unwrap_or_else(|_| "cargo".to_string());
-    let status = shell(&cargo, args, &[], true)?;
-
-    if ! status.success() {
-        Err(Error::from(ErrorKind::Interrupted))
-    } else {
-        Ok(())
-    }
+    shell_log_piped(&cargo, args, &[])
 }
 
 
@@ -227,6 +232,17 @@ where
 }
 
 
+pub fn contains_any_extension(test_path: &Path, extensions: &[&[u8]]) -> bool {
+    match test_path
+        .extension()
+        .map(|os_s| os_s.as_encoded_bytes())
+    {
+        Some(ext) => extensions.contains(&ext),
+        None => false,
+    }
+}
+
+
 pub fn copy_file_tree_filtered(
     from_dir: &Path,
     dest_dir: &Path,
@@ -248,14 +264,8 @@ pub fn copy_file_tree_filtered(
 
     for_each_file_recursively(&full_from_dir, |relative_path| {
         // note: we only log errors and return nothing here
-        // filter extensions
-        match relative_path
-            .extension()
-            .map(|os_s| os_s.as_encoded_bytes())
-        {
-            None => return,
-            Some(ext) if white_list ^ extensions.contains(&ext) => return,
-            Some(_) => {} // extension check passed
+        if white_list ^ contains_any_extension(relative_path, extensions) {
+            return;
         }
         // make necessary directories
         let from_path = from_dir.join(relative_path);

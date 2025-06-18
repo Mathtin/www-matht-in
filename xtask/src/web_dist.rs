@@ -1,4 +1,3 @@
-use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 use std::sync::mpsc;
 use std::sync::LazyLock;
@@ -6,8 +5,7 @@ use std::thread;
 use std::time::Duration;
 
 use crate::core_dist::{
-    BUILD_PATH, PROJECT_ROOT, TaskResult, cargo, copy_file_tree_filtered,
-    for_each_file_recursively, make_each_directory, shell, shell_log_piped,
+    cargo, contains_any_extension, copy_file_tree_filtered, for_each_file_recursively, make_each_directory, shell_log_piped, transparent_shell, TaskResult, BUILD_PATH, PROJECT_ROOT
 };
 use crate::paths;
 
@@ -69,13 +67,11 @@ fn build_web_distribution_by_path(
         &["--verbose", "build", "shards-browser", "--dev", "--target", "web", "--out-dir", &wasm_pkg_path_arg]
     };
 
-    if ! shell_log_piped(
+    shell_log_piped(
         "wasm-pack", 
         wasm_pack_args, 
         &[("RUSTFLAGS", "-Ctarget-cpu=mvp")]
-    )?.success() {
-        return Err(Error::from(ErrorKind::Interrupted));
-    };
+    )?;
 
     let front_page_path = PROJECT_ROOT.join(FRONT_PAGE_DIR);
 
@@ -104,11 +100,10 @@ fn serve_web_distribution_by_path(web_dist_path: &Path) -> TaskResult {
 
     let web_dist_path_str = web_dist_path.to_string_lossy();
 
-    shell(
+    transparent_shell(
         HTTP_SERVER, 
         &["--nocache", "-i", "-p", "8080", "--ip", "127.0.0.1", &web_dist_path_str], 
-        &[],
-        false
+        &[]
     )?;
 
     Ok(())
@@ -120,7 +115,9 @@ fn minify_swarm(input: &Path, output: &Path) -> TaskResult {
     assert!(available_parallelism > 0, "0 parallelism?!");
 
     type MinifyTask = (PathBuf, PathBuf);
-    type MinifyPipe = (mpsc::SyncSender<MinifyTask>, mpsc::Receiver<MinifyTask>);
+    type MinifyTaskSender = mpsc::SyncSender<MinifyTask>;
+    type MinifyTaskReceiver = mpsc::Receiver<MinifyTask>;
+    type MinifyPipe = (MinifyTaskSender, MinifyTaskReceiver);
     let pipes: Vec<MinifyPipe> = (0..available_parallelism).map(|_| mpsc::sync_channel(1)).collect();
 
     thread::scope(|s| {
@@ -137,20 +134,14 @@ fn minify_swarm(input: &Path, output: &Path) -> TaskResult {
             .collect();
 
         for_each_file_recursively(input, |relative_path| {
-            // check extension
-            match relative_path
-                .extension()
-                .map(|os_s| os_s.as_encoded_bytes())
-            {
-                None => return,
-                Some(ext) if !MINIFY_EXTENSIONS.contains(&ext) => return,
-                Some(_) => {} // extension check passed
+            if ! contains_any_extension(relative_path, MINIFY_EXTENSIONS) {
+                return;
             }
 
             let from_path = input.join(relative_path);
             let dest_path = output.join(relative_path);
 
-            let try_send = move |(p, _): &(mpsc::SyncSender<MinifyTask>, _)| p.try_send((from_path.clone(), dest_path.clone())).is_ok();
+            let try_send = move |(p, _): &(MinifyTaskSender, _)| p.try_send((from_path.clone(), dest_path.clone())).is_ok();
             // try push loop
             while ! pool.iter().any(&try_send)
             {
@@ -202,13 +193,9 @@ fn minify(input: &Path, output: &Path) -> TaskResult {
     let output = output.to_str().unwrap_or_default();
     let input = input.to_str().unwrap_or_default();
 
-    if ! shell_log_piped(
+    shell_log_piped(
         "minhtml",
         &["--minify-css", "--minify-js", "-o", output, input],
         &[]
-    )?.success() {
-        return Err(Error::from(ErrorKind::Interrupted));
-    };
-
-    Ok(())
+    )
 }
