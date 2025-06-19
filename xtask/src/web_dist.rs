@@ -32,9 +32,16 @@ pub fn build_web_distribution() -> TaskResult {
 
 
 pub fn serve_web_distribution() -> TaskResult {
-    build_web_distribution()?;
+    prepare_serve_web_distribution()?;
     let web_dist_path = paths::BUILD_PATH.join(paths::WEB_DIST_SUBDIRECTORY);
     serve_web_distribution_by_path(&web_dist_path)
+}
+
+
+pub fn prepare_serve_web_distribution() -> TaskResult {
+    build_web_distribution()?;
+    cargo(&["install", HTTP_SERVER])?;
+    Ok(())
 }
 
 
@@ -46,9 +53,16 @@ pub fn build_web_distribution_dev() -> TaskResult {
 
 
 pub fn serve_web_distribution_dev() -> TaskResult {
-    build_web_distribution_dev()?;
+    prepare_serve_web_distribution_dev()?;
     let web_dist_path = paths::BUILD_PATH.join(paths::WEB_DIST_DEV_SUBDIRECTORY);
     serve_web_distribution_by_path(&web_dist_path)
+}
+
+
+pub fn prepare_serve_web_distribution_dev() -> TaskResult {
+    build_web_distribution_dev()?;
+    cargo(&["install", HTTP_SERVER])?;
+    Ok(())
 }
 
 
@@ -97,8 +111,6 @@ fn build_web_distribution_by_path(
 
 
 fn serve_web_distribution_by_path(web_dist_path: &Path) -> TaskResult {
-    cargo(&["install", HTTP_SERVER])?;
-
     let web_dist_path_str = web_dist_path.to_string_lossy();
 
     transparent_shell(

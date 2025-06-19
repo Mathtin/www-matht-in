@@ -71,6 +71,17 @@
             ]
         },
         {
+            "type": "shell",
+            "label": "Run Tests",
+            "command": "cargo",
+            "args": [
+                "test", "--", "--nocapture"
+            ],
+            "problemMatcher": [
+                "$rustc", "$rust-panic"
+            ]
+        },
+        {
             "label": "Build Web Pakage",
             "type": "shell",
             "command": "cargo xtask build-web-dist",
@@ -140,18 +151,7 @@
         },
         {
             "type": "shell",
-            "label": "cargo test",
-            "command": "cargo",
-            "args": [
-                "test", "--", "--nocapture"
-            ],
-            "problemMatcher": [
-                "$rustc", "$rust-panic"
-            ]
-        },
-        {
-            "type": "shell",
-            "label": "cargo test build",
+            "label": "Build Tests",
             "command": "cargo",
             "args": [
                 "test", "--no-run"
@@ -159,6 +159,74 @@
             "problemMatcher": [
                 "$rustc"
             ]
-        }
+        },
+        {
+            "label": "Prepare Serve Web Pakage",
+            "type": "shell",
+            "command": "cargo xtask prepare-serve-web-dist",
+                "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "clear": true,
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$rustc",
+                {
+                    "owner": "rustc",
+                    "source": "rustc",
+                    "pattern": [
+                        {
+                            "regexp": "^\\d+-\\d+-\\d+ \\d+:\\d+:\\d+\\.\\d+\\+\\d+ \\[INFO\\] \\[wasm-pack stderr\\] (warning|error): (.*)$",
+                            "severity": 1,
+                            "message": 2,
+                        },
+                        {
+                            "regexp": "^\\d+-\\d+-\\d+ \\d+:\\d+:\\d+\\.\\d+\\+\\d+ \\[INFO\\] \\[wasm-pack stderr\\] [\\s\\->=]*(.*?):([1-9]\\d*):([1-9]\\d*)\\s*$",
+                            "file": 1,
+                            "line": 2,
+                            "column": 3
+                        }
+                    ]
+                },
+            ]
+        },
+        {
+            "label": "Prepare Serve Developer Web Pakage",
+            "type": "shell",
+            "command": "cargo xtask prepare-serve-web-dist-dev",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "reveal": "always",
+                "clear": true,
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$rustc",
+                {
+                    "owner": "rustc",
+                    "source": "rustc",
+                    "pattern": [
+                        {
+                            "regexp": "^\\d+-\\d+-\\d+ \\d+:\\d+:\\d+\\.\\d+\\+\\d+ \\[INFO\\] \\[wasm-pack stderr\\] (warning|error): (.*)$",
+                            "severity": 1,
+                            "message": 2,
+                        },
+                        {
+                            "regexp": "^\\d+-\\d+-\\d+ \\d+:\\d+:\\d+\\.\\d+\\+\\d+ \\[INFO\\] \\[wasm-pack stderr\\] [\\s\\->=]*(.*?):([1-9]\\d*):([1-9]\\d*)\\s*$",
+                            "file": 1,
+                            "line": 2,
+                            "column": 3
+                        }
+                    ]
+                },
+            ]
+        },
     ]
   }

@@ -7,6 +7,8 @@ use core_dist::{make_each_directory, TaskResult};
 use web_dist::{
     build_web_distribution, 
     build_web_distribution_dev,
+    prepare_serve_web_distribution,
+    prepare_serve_web_distribution_dev,
     serve_web_distribution,
     serve_web_distribution_dev
 };
@@ -25,14 +27,18 @@ type TasksCompactMap<'a> = HashMap<TaskKey<'a>, &'a TaskFn>;
 
 static TASKS_LIST: &[TasksListEntry] = &[
     ("build-web-dist",          (build_web_distribution,        "build distribution for web (HTML + WASM)")),
-    ("serve-web-dist",          (serve_web_distribution,        "serve distribution for web on http://127.0.0.1:8080")),
+    ("serve-web-dist",          (serve_web_distribution,        "serve distribution for web on http://127.0.0.1:8080 (via simple-http-server)")),
     ("build-windows-dist",      (todo_placeholder,              "build distribution for windows (x64 exe)")),
     ("build-android-dist",      (todo_placeholder,              "build distribution for android (arm64 apk)")),
 
     ("build-web-dist-dev",      (build_web_distribution_dev,    "build developer distribution for web (HTML + WASM)")),
-    ("serve-web-dist-dev",      (serve_web_distribution_dev,    "serve developer distribution for web on http://127.0.0.1:8080")),
+    ("serve-web-dist-dev",      (serve_web_distribution_dev,    "serve developer distribution for web on http://127.0.0.1:8080 (via simple-http-server)")),
     ("build-windows-dist-dev",  (todo_placeholder,              "build developer distribution for windows (x64 exe)")),
     ("build-android-dist-dev",  (todo_placeholder,              "build developer distribution for android (arm64 apk)")),
+
+    // For VS launch "serve (dev) web package)
+    ("prepare-serve-web-dist",          (prepare_serve_web_distribution,        "build distribution for web and install simple-http-server")),
+    ("prepare-serve-web-dist-dev",      (prepare_serve_web_distribution_dev,    "build developer distribution for web and install simple-http-server")),
 
     ("help",                    (print_help,                    "print help (this) message")),
 ];

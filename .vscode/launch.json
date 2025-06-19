@@ -4,44 +4,23 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in library 'shards_logger'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=shards-logger"
-                ],
-                "filter": {
-                    "name": "shards_logger",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
+            "name": "Serve Web Package (simple-http-server)",
+            "program": "~/.cargo/bin/simple-http-server",
+            "args": ["--nocache", "-i", "-p", "8080", "--ip", "127.0.0.1", "${workspaceFolder}/target/web-dist"],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Prepare Serve Web Pakage"
         },
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in library 'shards_browser'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=shards-browser"
-                ],
-                "filter": {
-                    "name": "shards_browser",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
+            "name": "Serve Dev Web Package (simple-http-server)",
+            "program": "~/.cargo/bin/simple-http-server",
+            "args": ["--nocache", "-i", "-p", "8080", "--ip", "127.0.0.1", "${workspaceFolder}/target/web-dist-dev"],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Prepare Serve Developer Web Pakage"
         },
         {
             "type": "lldb",
@@ -57,43 +36,6 @@
                 "filter": {
                     "name": "web",
                     "kind": "test"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug executable 'xtask'",
-            "cargo": {
-                "args": [
-                    "build",
-                    "--bin=xtask",
-                    "--package=xtask"
-                ],
-                "filter": {
-                    "name": "xtask",
-                    "kind": "bin"
-                }
-            },
-            "args": ["build-web-dist"],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in executable 'xtask'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--bin=xtask",
-                    "--package=xtask"
-                ],
-                "filter": {
-                    "name": "xtask",
-                    "kind": "bin"
                 }
             },
             "args": [],
