@@ -72,10 +72,10 @@
         },
         {
             "type": "shell",
-            "label": "Run Tests",
+            "label": "Run Tests (8 CPU)",
             "command": "cargo",
             "args": [
-                "test", "--", "--nocapture"
+                "test", "--", "--nocapture", "--test-threads", "8"
             ],
             "problemMatcher": [
                 "$rustc", "$rust-panic"

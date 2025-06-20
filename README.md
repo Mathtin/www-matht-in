@@ -41,13 +41,18 @@ cargo xtask serve-web-dist
 
 ## 🧪 Test & Develop
 
-This project includes configs for [VSCode](https://code.visualstudio.com/) (launch options and tasks with release web bundle as default build task).
+This project provides configs for [VSCode](https://code.visualstudio.com/) including launch options (`Ctrl`+`Shift`+`D`) and tasks (`Terminal` > `Run Task...`) with release web bundle as default build task (`Ctrl`+`Shift`+`B`).
 
-List of plugins for optimal experience:
+List of plugins required to build, run, serve and debug:
 
-* [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer) to be able to build, serve and also develop rust portion of project
+* [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer) to be able to build, run, serve and also develop rust portion of project
+* [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) to be able to debug native builds (required for launch options)
+
+If you planning to run all tests - adjust threads count in `.vscode/tasks.json` (8 by default).
+
+List of plugins for optimal developing experience:
+
 * [Even Better TOML](https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml) for rust development (toml support)
-* [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) to be able to debug native builds
 * [Code Spell Checker](https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker) for spell checking
 * [HTML CSS Support](https://marketplace.visualstudio.com/items?itemName=ecmel.vscode-html-css) for HTML/CSS development
 * [WebAssembly](https://marketplace.visualstudio.com/items?itemName=dtsvet.vscode-wasm) to be able to inspect wasm files
