@@ -29,7 +29,7 @@ pub fn make_each_directory(path: &Path) -> TaskResult {
 }
 
 
-fn log_pipe(proc_name: &str, pipe: &mut impl Read, is_stdout: bool) -> Result<(), Error> {
+fn log_pipe(proc_name: &str, pipe: &mut impl Read, is_stdout: bool) -> TaskResult {
     const COMMON_MAX_LINE_LENGTH: usize = 120;
     let mut line_buffer = [0; COMMON_MAX_LINE_LENGTH];
     let mut line_filled_part: &mut [u8] = &mut [];

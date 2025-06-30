@@ -6,6 +6,7 @@
         "codegen",
         "Ctarget",
         "egui",
+        "LLDB",
         "MATHT",
         "mathtin",
         "minhtml",
