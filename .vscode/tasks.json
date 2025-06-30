@@ -121,7 +121,7 @@
             "command": "cargo xtask build-web-dist-dev",
             "group": {
                 "kind": "build",
-                "isDefault": false
+                "isDefault": true
             },
             "presentation": {
                 "reveal": "always",
@@ -166,7 +166,7 @@
             "command": "cargo xtask prepare-serve-web-dist",
                 "group": {
                 "kind": "build",
-                "isDefault": true
+                "isDefault": false
             },
             "presentation": {
                 "reveal": "always",
