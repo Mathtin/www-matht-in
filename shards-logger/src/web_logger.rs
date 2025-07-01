@@ -4,7 +4,6 @@ use super::{Level, Log, Metadata, Record};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
-
 type RecordFormatter = &'static (dyn Fn(&Record) -> String + Send + Sync);
 
 /// Logs messages to the Web browser's console
@@ -46,7 +45,6 @@ impl Log for ConsoleLogger {
     fn flush(&self) {}
 }
 
-
 // Bindings to console functions
 #[wasm_bindgen]
 extern "C" {
@@ -59,7 +57,6 @@ extern "C" {
     #[wasm_bindgen(js_namespace=console)]
     fn error(text: &str);
 }
-
 
 pub fn init_log() {
     console_error_panic_hook::set_once();
