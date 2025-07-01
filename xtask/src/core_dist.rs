@@ -51,13 +51,22 @@ pub fn contains_any_extension(test_path: &Path, extensions: &[&[u8]]) -> bool {
 /// assert_eq!(relative_path_depth(&PathBuf::from("")), 0);
 /// assert_eq!(relative_path_depth(&PathBuf::from("foo")), 1);
 /// assert_eq!(relative_path_depth(&PathBuf::from("foo/bar")), 2);
+/// 
+/// assert!(
+///     std::panic::catch_unwind(|| relative_path_depth(&PathBuf::from("/")))
+///         .is_err()
+/// );
+/// assert!(
+///     std::panic::catch_unwind(|| relative_path_depth(&PathBuf::from("/foo")))
+///         .is_err()
+/// );
 /// ```
 pub fn relative_path_depth(path: &Path) -> usize {
     assert!(path.is_relative());
 
     let mut depth = 0;
     let mut path = path;
-
+    
     while let Some(parent) = path.parent() {
         depth += 1;
         path = parent;
