@@ -5,9 +5,8 @@ use std::thread;
 use std::time::Duration;
 
 use crate::core_dist::{
-    OK, TaskResult, cargo, contains_any_extension, copy_file_tree_filtered,
-    cut_path_children, for_each_file_recursively, make_each_directory,
-    relative_path_depth, shell_log_piped, transparent_shell,
+    DistributionPath, OK, TaskResult, cargo, make_each_directory,
+    shell_log_piped, transparent_shell,
 };
 use crate::paths;
 
@@ -127,34 +126,34 @@ fn build_web_distribution_by_path(
 
     let front_page_path = paths::PROJECT_ROOT.join(FRONT_PAGE_DIR);
 
+    // copy all wasm modules and js-bindings
+    log::debug!(
+        "[xtask] Copying js and wasm from {} to {}",
+        wasm_pkg_path.display(),
+        web_dist_path.display()
+    );
+    wasm_pkg_path.copy_file_tree_filtered(web_dist_path, |path| {
+        path.contains_any_extension(&[b"js", b"wasm"])
+    })?;
+
     if release {
         cargo(&["install", MINHTML])?;
-        // copy all wasm modules and js-bindings
-        copy_file_tree_filtered(
-            wasm_pkg_path,
-            web_dist_path,
-            &[b"js", b"wasm"],
-            true,
-        )?;
-        // minify front-page
-        minify_swarm(&front_page_path, web_dist_path)?;
-        // copy rest from front-page
-        copy_file_tree_filtered(
-            &front_page_path,
-            web_dist_path,
-            MINIFY_EXTENSIONS,
-            false,
-        )?;
+
+        // minify front-page html, css and js files
+        thread::scope(|s| minify_swarm(s, &front_page_path, web_dist_path))?;
+
+        // copy rest
+        log::debug!(
+            "[xtask] Copying resources from {} to {}",
+            wasm_pkg_path.display(),
+            web_dist_path.display()
+        );
+        front_page_path.copy_file_tree_filtered(web_dist_path, |path| {
+            !path.contains_any_extension(&MINIFY_EXTENSIONS)
+        })?;
     } else {
-        // copy all wasm modules and js-bindings
-        copy_file_tree_filtered(
-            wasm_pkg_path,
-            web_dist_path,
-            &[b"js", b"wasm"],
-            true,
-        )?;
         // copy whole front-page
-        copy_file_tree_filtered(&front_page_path, web_dist_path, &[], false)?;
+        front_page_path.copy_file_tree_filtered(web_dist_path, |_| true)?;
     }
 
     log::info!("[xtask] Done! Check: {}", web_dist_path.display());
@@ -181,59 +180,58 @@ fn serve_web_distribution_by_path(web_dist_path: &Path) -> TaskResult {
     OK
 }
 
-fn minify_swarm(input: &Path, output: &Path) -> TaskResult {
+fn minify_swarm<'a>(
+    s: &'a thread::Scope<'a, '_>,
+    input: &'a Path,
+    output: &'a Path,
+) -> TaskResult {
+    type MinifyTask = (PathBuf, PathBuf);
+    type MinifyTaskSender = mpsc::SyncSender<MinifyTask>;
+
     let available_parallelism = thread::available_parallelism()?.get();
     assert!(available_parallelism > 0, "0 parallelism?!");
 
-    type MinifyTask = (PathBuf, PathBuf);
-    type MinifyTaskSender = mpsc::SyncSender<MinifyTask>;
-    type MinifyTaskReceiver = mpsc::Receiver<MinifyTask>;
-    type MinifyPipe = (MinifyTaskSender, MinifyTaskReceiver);
-    let pipes: Vec<MinifyPipe> = (0..available_parallelism)
-        .map(|_| mpsc::sync_channel(1))
+    let log_minify_error = 
+        |err| log::error!(
+            "[xtask] failed to call minify {} > {}: {}",
+            input.display(),
+            output.display(),
+            err
+        );
+
+    let pool: Vec<_> = (0..available_parallelism)
+        .map(|_| {
+            let (sender, receiver): (MinifyTaskSender, _) =
+                mpsc::sync_channel(1);
+            
+            // capture pipe
+            let minify_thread_func = move || {
+                receiver
+                    .iter()
+                    .map(|(input, output)| minify(&input, &output))
+                    .filter_map(|minify_result| minify_result.err())
+                    .for_each(log_minify_error)
+            };
+            // spawn thread
+            (sender, s.spawn(minify_thread_func))
+        })
         .collect();
 
-    thread::scope(|s| {
-        let pool: Vec<(mpsc::SyncSender<MinifyTask>, _)> = pipes
-            .into_iter()
-            .map(|(sender, receiver)| {
-                (
-                    sender,
-                    s.spawn(
-                // thread listening pipe
-                        move || {
-                            while let Ok((input, output)) = receiver.recv() {
-                    if let Err(e) = minify(&input, &output) {
-                                    log::error!(
-                                        "[xtask] failed to call minify {} > {}: {}",
-                                        input.display(),
-                                        output.display(),
-                                        e
-                                    );
-                    }
-                            }
-                        },
-                    ),
-                )
-            })
-            .collect();
+    input.for_each_file_recursively(|relative_path| {
+        if !relative_path.contains_any_extension(MINIFY_EXTENSIONS) {
+            return;
+        }
 
-        for_each_file_recursively(input, |relative_path| {
-            if !contains_any_extension(relative_path, MINIFY_EXTENSIONS) {
-                return;
-            }
+        let from_path = input.join(relative_path);
+        let dest_path = output.join(relative_path);
+        let try_send = move |(p, _): &(MinifyTaskSender, _)| {
+            p.try_send((from_path.clone(), dest_path.clone())).is_ok()
+        };
 
-            let from_path = input.join(relative_path);
-            let dest_path = output.join(relative_path);
-
-            let try_send = move |(p, _): &(MinifyTaskSender, _)| {
-                p.try_send((from_path.clone(), dest_path.clone())).is_ok()
-            };
-            // try push loop
-            while !pool.iter().any(&try_send) {
-                thread::sleep(Duration::from_millis(1));
-            }
-        })
+        // try push loop
+        while !pool.iter().any(&try_send) {
+            thread::sleep(Duration::from_millis(1));
+        }
     })
 }
 
@@ -279,9 +277,8 @@ fn handle_minify_directory_renaming(
     {
         Some((relative_path, renamed_path)) => {
             let renamed_relative_output = renamed_path.join(relative_path);
-            let cut_depth = relative_path_depth(&renamed_relative_output);
-            if let Some(output_base) = cut_path_children(full_output, cut_depth)
-            {
+            let cut_depth = renamed_relative_output.relative_depth();
+            if let Some(output_base) = full_output.cut_children(cut_depth) {
                 output_base.join(renamed_relative_output)
             } else {
                 full_output.to_owned()

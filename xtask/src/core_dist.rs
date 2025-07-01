@@ -10,102 +10,217 @@ use std::{
 use crate::paths;
 
 ////////////////////////////////////////////////////////////////////////////////
-// Simple Types
+// Types
 ////////////////////////////////////////////////////////////////////////////////
 
 pub type TaskResult = Result<()>;
 pub const OK: TaskResult = Ok(());
 
-////////////////////////////////////////////////////////////////////////////////
-// Path processing
-////////////////////////////////////////////////////////////////////////////////
+/// Some extra methods for Path
+pub trait DistributionPath {
+    fn contains_any_extension(&self, extensions: &[&[u8]]) -> bool;
 
-/// Check if `test_path` ends with any of specified extensions
-///
-/// # Examples
-///
-/// ```
-/// use std::path::PathBuf;
-/// use xtask::core_dist::contains_any_extension;
-///
-/// assert_eq!(contains_any_extension(&PathBuf::from(""), &[b""]), false);
-/// assert_eq!(contains_any_extension(&PathBuf::from("foo"), &[b"foo"]), false);
-/// assert_eq!(contains_any_extension(&PathBuf::from("foo.bar"), &[b"foo"]), false);
-/// assert_eq!(contains_any_extension(&PathBuf::from("foo.bar"), &[b"foo", b"bar"]), true);
-/// ```
-pub fn contains_any_extension(test_path: &Path, extensions: &[&[u8]]) -> bool {
-    match test_path.extension().map(|os_s| os_s.as_encoded_bytes()) {
-        Some(ext) => extensions.contains(&ext),
-        None => false,
-    }
+    fn relative_depth(&self) -> usize;
+
+    fn cut_children(&self, depth: usize) -> Option<&Path>;
+
+    fn for_each_file_recursively<'a, F>(&self, f: F) -> TaskResult
+    where
+        F: FnMut(&Path) -> () + 'a;
+
+    fn copy_file_tree_filtered<'a, P>(
+        &self,
+        dest_dir: &Path,
+        predicate: P,
+    ) -> TaskResult
+    where
+        P: FnMut(&Path) -> bool + 'a;
 }
 
-/// Measures relative depth.
-///
-/// # Examples
-///
-/// ```
-/// use std::path::PathBuf;
-/// use xtask::core_dist::relative_path_depth;
-///
-/// assert_eq!(relative_path_depth(&PathBuf::from("")), 0);
-/// assert_eq!(relative_path_depth(&PathBuf::from("foo")), 1);
-/// assert_eq!(relative_path_depth(&PathBuf::from("foo/bar")), 2);
-/// 
-/// assert!(
-///     std::panic::catch_unwind(|| relative_path_depth(&PathBuf::from("/")))
-///         .is_err()
-/// );
-/// assert!(
-///     std::panic::catch_unwind(|| relative_path_depth(&PathBuf::from("/foo")))
-///         .is_err()
-/// );
-/// ```
-pub fn relative_path_depth(path: &Path) -> usize {
-    assert!(path.is_relative());
+impl DistributionPath for Path {
+    ////////////////////////////////////////////////////////////////////////////////
+    // Path processing
+    ////////////////////////////////////////////////////////////////////////////////
 
-    let mut depth = 0;
-    let mut path = path;
-    
-    while let Some(parent) = path.parent() {
-        depth += 1;
-        path = parent;
+    /// Check if `test_path` ends with any of specified extensions
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::path::Path;
+    /// use xtask::core_dist::DistributionPath;
+    ///
+    /// assert!(!Path::new("").contains_any_extension(&[b""]));
+    /// assert!(!Path::new("foo").contains_any_extension(&[b"foo"]));
+    /// assert!(!Path::new("foo.bar").contains_any_extension(&[b"foo"]));
+    /// assert!(Path::new("foo.bar").contains_any_extension(&[b"foo", b"bar"]));
+    /// ```
+    fn contains_any_extension(&self, extensions: &[&[u8]]) -> bool {
+        match self.extension().map(|os_s| os_s.as_encoded_bytes()) {
+            Some(ext) => extensions.contains(&ext),
+            None => false,
+        }
     }
 
-    depth
+    /// Measures relative depth.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::path::Path;
+    /// use xtask::core_dist::DistributionPath;
+    ///
+    /// assert_eq!(Path::new("").relative_depth(), 0);
+    /// assert_eq!(Path::new("foo").relative_depth(), 1);
+    /// assert_eq!(Path::new("foo/bar").relative_depth(), 2);
+    ///
+    /// assert!(
+    ///     std::panic::catch_unwind(|| Path::new("/").relative_depth())
+    ///         .is_err()
+    /// );
+    /// assert!(
+    ///     std::panic::catch_unwind(|| Path::new("/foo").relative_depth())
+    ///         .is_err()
+    /// );
+    /// ```
+    fn relative_depth(&self) -> usize {
+        assert!(self.is_relative());
+
+        let mut depth = 0;
+        let mut path = self;
+
+        while let Some(parent) = path.parent() {
+            depth += 1;
+            path = parent;
+        }
+
+        depth
+    }
+
+    /// Cuts with some depth.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::path::Path;
+    /// use xtask::core_dist::DistributionPath;
+    ///
+    /// assert_eq!(Path::new("").cut_children(0), Some(Path::new("")));
+    /// assert_eq!(Path::new("").cut_children(1), None);
+    ///
+    /// assert_eq!(Path::new("/").cut_children(0), Some(Path::new("/")));
+    /// assert_eq!(Path::new("/").cut_children(1), None);
+    ///
+    /// assert_eq!(Path::new("foo").cut_children(0), Some(Path::new("foo")));
+    /// assert_eq!(Path::new("foo").cut_children(1), Some(Path::new("")));
+    /// assert_eq!(Path::new("foo").cut_children(2), None);
+    /// ```
+    fn cut_children(&self, depth: usize) -> Option<&Path> {
+        if depth == 0 {
+            return Some(self);
+        }
+
+        let mut path = self;
+        for _ in 0..depth {
+            path = path.parent()?;
+        }
+
+        Some(path)
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // File System Manipulation Primitives
+    ////////////////////////////////////////////////////////////////////////////////
+
+    /// DFS throughout `base_dir` based on lazy iterators
+    ///
+    /// Note: `f` receives path relative to `base_dir`
+    fn for_each_file_recursively<'a, F>(&self, f: F) -> TaskResult
+    where
+        F: FnMut(&Path) -> () + 'a,
+    {
+        // Note: pop_files returns iterator of directories
+
+        // Wrap for multiple mutable borrows inside pop_files
+        let f = RefCell::new(f);
+        let mut remaining_dirs_iterators = {
+            let inner_dirs_iterator = pop_files(self, self, &f)?;
+            vec![inner_dirs_iterator]
+        };
+
+        // DFS loop (pop stack top)
+        while let Some(mut dirs) = remaining_dirs_iterators.pop() {
+            match dirs.next() {
+                Some(ref new_dir) => {
+                    log::debug!(
+                        "[xtask] processing recursively dir {}",
+                        new_dir.display()
+                    );
+                    // bring parent level file-iterator back first
+                    remaining_dirs_iterators.push(dirs);
+                    // try add child level file-iterator
+                    match pop_files(self, new_dir, &f) {
+                        Ok(iterator) => remaining_dirs_iterators.push(iterator),
+                        Err(e) => log::error!(
+                            "[xtask] Failed to list {}: {}",
+                            new_dir.display(),
+                            e
+                        ),
+                    }
+                }
+                None => (),
+            };
+        }
+
+        OK
+    }
+
+    /// Copy files from `from_dir` to `dest_dir` passing `predicate`.
+    /// Does not stop on errors (just logs and skips).
+    fn copy_file_tree_filtered<'a, P>(
+        &self,
+        dest_dir: &Path,
+        mut predicate: P,
+    ) -> TaskResult
+    where
+        P: FnMut(&Path) -> bool + 'a,
+    {
+        self.for_each_file_recursively(|relative_path| {
+            // note: we only log errors and return nothing here
+            if ! predicate(relative_path) {
+                return;
+            }
+            let from_path = self.join(relative_path);
+            let dest_path = dest_dir.join(relative_path);
+            // make necessary directories
+            if let Some(dest_path_parent) = dest_path.parent()
+                && let Err(e) = make_each_directory(dest_path_parent)
+            {
+                log::error!(
+                    "[xtask] Error creating directory {} while copying file tree: {}",
+                    dest_path_parent.display(),
+                    e
+                );
+                return;
+            }
+            // copy
+            log::info!(
+                "[xtask] Copying {} to {}",
+                from_path.display(),
+                dest_path.display()
+            );
+            match fs::copy(&from_path, &dest_path) {
+                Err(e) => log::error!(
+                    "[xtask] Error copying {} to {}: {}",
+                    from_path.display(),
+                    dest_path.display(),
+                    e
+                ),
+                Ok(_) => {}
+            }
+        })
+    }
 }
-
-/// Cuts with some depth.
-///
-/// # Examples
-///
-/// ```
-/// use std::path::PathBuf;
-/// use xtask::core_dist::cut_path_children;
-///
-/// assert_eq!(cut_path_children(&PathBuf::from(""), 0), Some(PathBuf::from("").as_path()));
-/// assert_eq!(cut_path_children(&PathBuf::from(""), 1), None);
-///
-/// assert_eq!(cut_path_children(&PathBuf::from("a"), 0), Some(PathBuf::from("a").as_path()));
-/// assert_eq!(cut_path_children(&PathBuf::from("a"), 1), Some(PathBuf::from("").as_path()));
-/// assert_eq!(cut_path_children(&PathBuf::from("a"), 2), None);
-/// ```
-pub fn cut_path_children(path: &Path, depth: usize) -> Option<&Path> {
-    if depth == 0 {
-        return Some(path);
-    }
-
-    let mut path = path;
-    for _ in 0..depth {
-        path = path.parent()?;
-    }
-
-    Some(path)
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// File System Manipulation Primitives
-////////////////////////////////////////////////////////////////////////////////
 
 /// Creates each directory in path (logged call to fs::create_dir_all).
 pub fn make_each_directory(path: &Path) -> TaskResult {
@@ -114,107 +229,6 @@ pub fn make_each_directory(path: &Path) -> TaskResult {
     }
     log::info!("[xtask] making each directory in {}", path.display());
     fs::create_dir_all(path)
-}
-
-/// DFS throughout `base_dir` based on lazy iterators
-///
-/// Note: `f` receives path relative to `base_dir`
-pub fn for_each_file_recursively<'a, F>(base_dir: &Path, f: F) -> TaskResult
-where
-    F: FnMut(&Path) -> () + 'a,
-{
-    // Note: pop_files returns iterator of directories
-
-    // Wrap for multiple mutable borrows inside pop_files
-    let f = RefCell::new(f);
-    let mut remaining_dirs_iterators = {
-        let inner_dirs_iterator = pop_files(&base_dir, &base_dir, &f)?;
-        vec![inner_dirs_iterator]
-    };
-
-    // DFS loop (pop stack top)
-    while let Some(mut dirs) = remaining_dirs_iterators.pop() {
-        match dirs.next() {
-            Some(new_dir) => {
-                log::debug!(
-                    "[xtask] processing recursively dir {}",
-                    new_dir.display()
-                );
-                // bring parent level file-iterator back first
-                remaining_dirs_iterators.push(dirs);
-                // try add child level file-iterator
-                match pop_files(base_dir, &new_dir, &f) {
-                    Ok(iterator) => remaining_dirs_iterators.push(iterator),
-                    Err(e) => log::error!(
-                        "[xtask] Failed to list {}: {}",
-                        new_dir.display(),
-                        e
-                    ),
-                }
-            }
-            None => (),
-        };
-    }
-
-    OK
-}
-
-/// Copy every file from `from_dir` to `dest_dir`
-/// with respect to `extensions` white(black)list.
-/// Does not stop on errors (just logs and skips).
-pub fn copy_file_tree_filtered(
-    from_dir: &Path,
-    dest_dir: &Path,
-    extensions: &[&[u8]],
-    white_list: bool,
-) -> TaskResult {
-    log::info!(
-        "[xtask] Copying all{} {:?} from {} to {}",
-        (if white_list { "" } else { " besides" }),
-        extensions
-            .iter()
-            .map(|e| String::from_utf8_lossy(e))
-            .collect::<Vec<_>>(),
-        from_dir.display(),
-        dest_dir.display()
-    );
-
-    let full_from_dir = from_dir.canonicalize()?;
-
-    for_each_file_recursively(&full_from_dir, |relative_path| {
-        // note: we only log errors and return nothing here
-        if white_list ^ contains_any_extension(relative_path, extensions) {
-            return;
-        }
-        let from_path = from_dir.join(relative_path);
-        let dest_path = dest_dir.join(relative_path);
-        // make necessary directories
-        if let Some(dest_path_parent) = dest_path.parent()
-            && let Err(e) = make_each_directory(dest_path_parent)
-        {
-            log::error!(
-                "[xtask] Error creating directory {} while copying file tree: {}",
-                dest_path_parent.display(),
-                e
-            );
-            return;
-        }
-        // copy
-        log::info!(
-            "[xtask] Copying {} to {}",
-            from_path.display(),
-            dest_path.display()
-        );
-        match fs::copy(&from_path, &dest_path) {
-            Err(e) => log::error!(
-                "[xtask] Error copying {} to {}: {}",
-                from_path.display(),
-                dest_path.display(),
-                e
-            ),
-            Ok(_) => {}
-        }
-    })
 }
 
 ////////////////////////////////////////////////////////////////////////////////
