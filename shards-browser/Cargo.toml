@@ -3,6 +3,7 @@ name = "shards-browser"
 version = "0.1.0"
 authors = ["mathtin"]
 edition = "2024"
+rust-version = "1.88.0"
 
 [package.metadata.wasm-pack.profile.release] 
 wasm-opt = ["-O", "--enable-bulk-memory", "--enable-mutable-globals"]
