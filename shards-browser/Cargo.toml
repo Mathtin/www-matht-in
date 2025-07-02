@@ -39,7 +39,3 @@ web-time = "1.1.0"
 default = ["wgpu/default"]
 webgl = ["wgpu/webgl"]
 webgpu = ["wgpu/webgpu"]
-
-[profile.release]
-panic = "abort"   # On panic, abort immediately rather than unwinding.
-lto = true        # Link time optimization
