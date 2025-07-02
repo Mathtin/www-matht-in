@@ -280,7 +280,7 @@ fn handle_minify_directory_renaming(
             full_input
                 .strip_prefix(path)
                 .ok()
-                .map(|v| (v, renamed_path))
+                .map(|relative_path| (relative_path, renamed_path))
         });
 
     if let Some((relative_path, renamed_path)) = candidates_it.next()
