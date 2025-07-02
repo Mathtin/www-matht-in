@@ -73,15 +73,30 @@ impl DistributionPath for Path {
     /// assert_eq!(Path::new("").relative_depth(), 0);
     /// assert_eq!(Path::new("foo").relative_depth(), 1);
     /// assert_eq!(Path::new("foo/bar").relative_depth(), 2);
-    ///
-    /// assert!(
-    ///     std::panic::catch_unwind(|| Path::new("/").relative_depth())
-    ///         .is_err()
-    /// );
-    /// assert!(
-    ///     std::panic::catch_unwind(|| Path::new("/foo").relative_depth())
-    ///         .is_err()
-    /// );
+    /// 
+    /// #[cfg(target_os = "linux")]
+    /// {
+    ///     assert!(
+    ///         std::panic::catch_unwind(|| Path::new("/").relative_depth())
+    ///             .is_err()
+    ///     );
+    ///     assert!(
+    ///         std::panic::catch_unwind(|| Path::new("/foo").relative_depth())
+    ///             .is_err()
+    ///     );
+    /// }
+    /// 
+    /// #[cfg(target_os = "windows")]
+    /// {
+    ///     assert!(
+    ///         std::panic::catch_unwind(|| Path::new("C:\\").relative_depth())
+    ///             .is_err()
+    ///     );
+    ///     assert!(
+    ///         std::panic::catch_unwind(|| Path::new("C:\\foo").relative_depth())
+    ///             .is_err()
+    ///     );
+    /// }
     /// ```
     fn relative_depth(&self) -> usize {
         assert!(self.is_relative());
