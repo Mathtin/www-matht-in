@@ -28,7 +28,7 @@ const HIDDEN_ERROR_PAGE_DIR: &str = ".error_pages";
 
 const MINIFY_EXTENSIONS: &[&[u8]] = &[b"html", b"css", b"js"];
 
-const MINIFY_DIR_RENAMING: LazyLock<[(PathBuf, PathBuf); 1]> =
+static MINIFY_DIR_RENAMING: LazyLock<[(PathBuf, PathBuf); 1]> =
     LazyLock::new(|| {
         [(
             paths::PROJECT_ROOT
@@ -196,7 +196,7 @@ fn minify_swarm<'a>(
             err
         );
     };
-    
+
     // Specify sender type to help infer rest
     type MinifyTask = (PathBuf, PathBuf); // minify(&input, &output)
     let make_channel = || mpsc::sync_channel::<MinifyTask>(0);
@@ -273,7 +273,7 @@ fn handle_minify_directory_renaming(
     assert!(full_input.is_absolute());
     assert!(full_output.is_absolute());
 
-    match MINIFY_DIR_RENAMING
+    let mut candidates_it = MINIFY_DIR_RENAMING
         .iter()
         // Find by trying stripping prefix of input dir and taking first successful
         .filter_map(|(path, renamed_path)| {
@@ -281,18 +281,15 @@ fn handle_minify_directory_renaming(
                 .strip_prefix(path)
                 .ok()
                 .map(|v| (v, renamed_path))
-        })
-        .next()
+        });
+
+    if let Some((relative_path, renamed_path)) = candidates_it.next()
+        && let renamed_relative_output = renamed_path.join(relative_path)
+        && let cut_depth = renamed_relative_output.relative_depth()
+        && let Some(output_base) = full_output.cut_children(cut_depth)
     {
-        Some((relative_path, renamed_path)) => {
-            let renamed_relative_output = renamed_path.join(relative_path);
-            let cut_depth = renamed_relative_output.relative_depth();
-            if let Some(output_base) = full_output.cut_children(cut_depth) {
-                output_base.join(renamed_relative_output)
-            } else {
-                full_output.to_owned()
-            }
-        }
-        None => full_output.to_owned(),
+        output_base.join(renamed_relative_output)
+    } else {
+        full_output.to_owned()
     }
 }
