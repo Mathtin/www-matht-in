@@ -185,26 +185,26 @@ fn minify_swarm<'a>(
     input: &'a Path,
     output: &'a Path,
 ) -> TaskResult {
-    type MinifyTask = (PathBuf, PathBuf);
-    type MinifyTaskSender = mpsc::SyncSender<MinifyTask>;
-
     let available_parallelism = thread::available_parallelism()?.get();
     assert!(available_parallelism > 0, "0 parallelism?!");
 
-    let log_minify_error = 
-        |err| log::error!(
+    let log_minify_error = |err| {
+        log::error!(
             "[xtask] failed to call minify {} > {}: {}",
             input.display(),
             output.display(),
             err
         );
+    };
+    // Specify sender type to help infer rest
+    type MinifyTask = (PathBuf, PathBuf); // minify(&input, &output)
+    let make_channel = || mpsc::sync_channel::<MinifyTask>(1);
 
-    let pool: Vec<_> = (0..available_parallelism)
+    // Spawn thread pool with pipe
+    let pipes: Vec<_> = (0..available_parallelism)
         .map(|_| {
-            let (sender, receiver): (MinifyTaskSender, _) =
-                mpsc::sync_channel(1);
-            
-            // capture pipe
+            let (sender, receiver) = make_channel();
+
             let minify_thread_func = move || {
                 receiver
                     .iter()
@@ -212,8 +212,10 @@ fn minify_swarm<'a>(
                     .filter_map(|minify_result| minify_result.err())
                     .for_each(log_minify_error)
             };
-            // spawn thread
-            (sender, s.spawn(minify_thread_func))
+
+            s.spawn(minify_thread_func);
+
+            sender
         })
         .collect();
 
@@ -224,12 +226,13 @@ fn minify_swarm<'a>(
 
         let from_path = input.join(relative_path);
         let dest_path = output.join(relative_path);
-        let try_send = move |(p, _): &(MinifyTaskSender, _)| {
+        type MinifyTaskSender = mpsc::SyncSender<MinifyTask>;
+        let try_send = move |p: &MinifyTaskSender| {
             p.try_send((from_path.clone(), dest_path.clone())).is_ok()
         };
 
         // try push loop
-        while !pool.iter().any(&try_send) {
+        while !pipes.iter().any(&try_send) {
             thread::sleep(Duration::from_millis(1));
         }
     })
