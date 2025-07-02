@@ -196,9 +196,10 @@ fn minify_swarm<'a>(
             err
         );
     };
+    
     // Specify sender type to help infer rest
     type MinifyTask = (PathBuf, PathBuf); // minify(&input, &output)
-    let make_channel = || mpsc::sync_channel::<MinifyTask>(1);
+    let make_channel = || mpsc::sync_channel::<MinifyTask>(0);
 
     // Spawn thread pool with pipe
     let pipes: Vec<_> = (0..available_parallelism)
@@ -224,15 +225,20 @@ fn minify_swarm<'a>(
             return;
         }
 
-        let from_path = input.join(relative_path);
-        let dest_path = output.join(relative_path);
-        type MinifyTaskSender = mpsc::SyncSender<MinifyTask>;
-        let try_send = move |p: &MinifyTaskSender| {
-            p.try_send((from_path.clone(), dest_path.clone())).is_ok()
-        };
+        let mut minify_args =
+            (input.join(relative_path), output.join(relative_path));
 
-        // try push loop
-        while !pipes.iter().any(&try_send) {
+        'send_loop: loop {
+            for pipe in pipes.iter() {
+                minify_args = if let Err(e) = pipe.try_send(minify_args) {
+                    match e {
+                        mpsc::TrySendError::Full(args) => args,
+                        mpsc::TrySendError::Disconnected(args) => args,
+                    }
+                } else {
+                    break 'send_loop;
+                }
+            }
             thread::sleep(Duration::from_millis(1));
         }
     })
