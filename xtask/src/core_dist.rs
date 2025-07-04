@@ -75,7 +75,7 @@ impl DistributionPath for Path {
     /// assert_eq!(Path::new("").relative_depth(), 0);
     /// assert_eq!(Path::new("foo").relative_depth(), 1);
     /// assert_eq!(Path::new("foo/bar").relative_depth(), 2);
-    /// 
+    ///
     /// #[cfg(target_os = "linux")]
     /// {
     ///     assert!(
@@ -87,7 +87,7 @@ impl DistributionPath for Path {
     ///             .is_err()
     ///     );
     /// }
-    /// 
+    ///
     /// #[cfg(target_os = "windows")]
     /// {
     ///     assert!(
@@ -194,11 +194,7 @@ impl DistributionPath for Path {
 
     /// Copy all files from `from_dir` to `dest_dir`.
     /// Does not stop on errors (just logs and skips).
-    fn copy_file_tree(
-        &self,
-        dest_dir: &Path,
-    ) -> TaskResult
-    {
+    fn copy_file_tree(&self, dest_dir: &Path) -> TaskResult {
         self.copy_file_tree_filtered(dest_dir, |_| true)
     }
 

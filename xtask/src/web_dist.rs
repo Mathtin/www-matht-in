@@ -225,6 +225,7 @@ fn minify_swarm<'a>(
         })
         .collect();
 
+    // for each file send minify task to any available pipe
     input.for_each_file_recursively(|relative_path| {
         if !relative_path.contains_any_extension(MINIFY_EXTENSIONS) {
             return;
@@ -233,17 +234,33 @@ fn minify_swarm<'a>(
         let mut minify_args =
             (input.join(relative_path), output.join(relative_path));
 
-        'send_loop: loop {
+        loop {
+            let mut all_disconnected = true;
+
             for pipe in pipes.iter() {
                 minify_args = if let Err(e) = pipe.try_send(minify_args) {
                     match e {
-                        mpsc::TrySendError::Full(args) => args,
+                        mpsc::TrySendError::Full(args) => {
+                            all_disconnected = false;
+                            args
+                        },
                         mpsc::TrySendError::Disconnected(args) => args,
                     }
                 } else {
-                    break 'send_loop;
+                    // successfully sent minify task in thread
+                    return;
                 }
             }
+
+            if all_disconnected {
+                log::error!(
+                    "[xtask] failed to send minify task [{} > {}]: all thread pipes disconnected",
+                    minify_args.0.display(),
+                    minify_args.1.display(),
+                );
+                return;
+            }
+
             thread::sleep(Duration::from_millis(1));
         }
     })
@@ -280,15 +297,16 @@ fn handle_minify_directory_renaming(
 
     // Find by trying stripping prefix of input dir and taking all successful.
     // First candidate would be enough.
-    let mut candidates_it = MINIFY_DIR_RENAMING
-        .iter()
-        .filter_map(|(path, renamed_path)| {
-            // try strip path and take renamed_path with
-            full_input
-                .strip_prefix(path)
-                .ok()
-                .map(|relative_path| (relative_path, renamed_path))
-        });
+    let mut candidates_it =
+        MINIFY_DIR_RENAMING
+            .iter()
+            .filter_map(|(path, renamed_path)| {
+                // try strip path and take renamed_path with
+                full_input
+                    .strip_prefix(path)
+                    .ok()
+                    .map(|relative_path| (relative_path, renamed_path))
+            });
 
     if let Some((relative_path, renamed_path)) = candidates_it.next()
         && let renamed_relative_output = renamed_path.join(relative_path)
