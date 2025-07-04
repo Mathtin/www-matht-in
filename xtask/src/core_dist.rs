@@ -28,6 +28,8 @@ pub trait DistributionPath {
     where
         F: FnMut(&Path) -> () + 'a;
 
+    fn copy_file_tree(&self, dest_dir: &Path) -> TaskResult;
+
     fn copy_file_tree_filtered<'a, P>(
         &self,
         dest_dir: &Path,
@@ -188,6 +190,16 @@ impl DistributionPath for Path {
         }
 
         OK
+    }
+
+    /// Copy all files from `from_dir` to `dest_dir`.
+    /// Does not stop on errors (just logs and skips).
+    fn copy_file_tree(
+        &self,
+        dest_dir: &Path,
+    ) -> TaskResult
+    {
+        self.copy_file_tree_filtered(dest_dir, |_| true)
     }
 
     /// Copy files from `from_dir` to `dest_dir` passing `predicate`.

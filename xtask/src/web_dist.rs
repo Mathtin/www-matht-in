@@ -145,7 +145,7 @@ fn build_web_distribution_by_path(
         // copy rest
         log::debug!(
             "[xtask] Copying resources from {} to {}",
-            wasm_pkg_path.display(),
+            front_page_path.display(),
             web_dist_path.display()
         );
         front_page_path.copy_file_tree_filtered(web_dist_path, |path| {
@@ -153,7 +153,12 @@ fn build_web_distribution_by_path(
         })?;
     } else {
         // copy whole front-page
-        front_page_path.copy_file_tree_filtered(web_dist_path, |_| true)?;
+        log::debug!(
+            "[xtask] Copying everything from {} to {}",
+            front_page_path.display(),
+            web_dist_path.display()
+        );
+        front_page_path.copy_file_tree(web_dist_path)?;
     }
 
     log::info!("[xtask] Done! Check: {}", web_dist_path.display());
