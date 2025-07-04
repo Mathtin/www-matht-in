@@ -273,10 +273,12 @@ fn handle_minify_directory_renaming(
     assert!(full_input.is_absolute());
     assert!(full_output.is_absolute());
 
+    // Find by trying stripping prefix of input dir and taking all successful.
+    // First candidate would be enough.
     let mut candidates_it = MINIFY_DIR_RENAMING
         .iter()
-        // Find by trying stripping prefix of input dir and taking first successful
         .filter_map(|(path, renamed_path)| {
+            // try strip path and take renamed_path with
             full_input
                 .strip_prefix(path)
                 .ok()
