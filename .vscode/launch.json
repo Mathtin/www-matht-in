@@ -5,29 +5,21 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug web dist in edge",
+            "name": "Debug Dev Web Package (edge+simple-http-server)",
             "type": "msedge",
             "request": "launch",
             "url": "http://localhost:8080",
-            "webRoot": "${workspaceFolder}/front-page"
+            "webRoot": "${workspaceFolder}/front-page",
+            "preLaunchTask": "Serve Developer Web Package"
         },
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Serve Web Package (simple-http-server)",
+            "name": "Serve Release Web Package (simple-http-server)",
             "program": "~/.cargo/bin/simple-http-server",
             "args": ["--nocache", "-i", "-p", "8080", "--ip", "127.0.0.1", "${workspaceFolder}/target/web-dist"],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "Prepare Serve Web Pakage"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Serve Dev Web Package (simple-http-server)",
-            "program": "~/.cargo/bin/simple-http-server",
-            "args": ["--nocache", "-i", "-p", "8080", "--ip", "127.0.0.1", "${workspaceFolder}/target/web-dist-dev"],
-            "cwd": "${workspaceFolder}",
-            "preLaunchTask": "Prepare Serve Developer Web Pakage"
         },
         {
             "type": "lldb",

@@ -6,6 +6,7 @@
         {
             "label": "Serve Web Package",
             "type": "shell",
+            "isBackground": true,
             "command": "cargo xtask serve-web-dist",
             "group": {
                 "kind": "test",
@@ -33,13 +34,19 @@
                             "line": 2,
                             "column": 3
                         }
-                    ]
+                    ],
+                    "background": {
+                        "activeOnStart": true,
+                        "beginsPattern": ".",
+                        "endsPattern": ".",
+                    }
                 },
             ]
         },
         {
             "label": "Serve Developer Web Package",
             "type": "shell",
+            "isBackground": true,
             "command": "cargo xtask serve-web-dist-dev",
             "group": {
             "kind": "test",
@@ -66,7 +73,12 @@
                             "line": 2,
                             "column": 3
                         }
-                    ]
+                    ],
+                    "background": {
+                        "activeOnStart": true,
+                        "beginsPattern": ".",
+                        "endsPattern": ".",
+                    }
                 },
             ]
         },
