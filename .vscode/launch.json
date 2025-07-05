@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug web dist in edge",
+            "type": "msedge",
+            "request": "launch",
+            "url": "http://localhost:8080",
+            "webRoot": "${workspaceFolder}/front-page"
+        },
+        {
             "type": "lldb",
             "request": "launch",
             "name": "Serve Web Package (simple-http-server)",
