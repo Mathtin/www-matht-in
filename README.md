@@ -57,6 +57,7 @@ List of plugins for optimal developing experience:
 * [HTML CSS Support](https://marketplace.visualstudio.com/items?itemName=ecmel.vscode-html-css) for HTML/CSS development
 * [WebAssembly](https://marketplace.visualstudio.com/items?itemName=dtsvet.vscode-wasm) to be able to inspect wasm files
 * [Git Changelists](https://marketplace.visualstudio.com/items?itemName=koenigstag.git-changelists) to sort changes in git
+* [Git Patch](https://marketplace.visualstudio.com/items?itemName=paragdiwan.gitpatch) to apply patches
 
 ## License
 
