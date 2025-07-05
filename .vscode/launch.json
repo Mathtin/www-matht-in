@@ -5,19 +5,58 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug Dev Web Package (edge+simple-http-server)",
-            "type": "msedge",
+            "type": "pwa-msedge",
+            "name": "Launch Microsoft Edge",
             "request": "launch",
+            "runtimeArgs": [
+                "--remote-debugging-port=9222"
+            ],
             "url": "http://localhost:8080",
             "webRoot": "${workspaceFolder}/front-page",
+            "presentation": {
+                "hidden": true
+            },
             "preLaunchTask": "Serve Developer Web Package"
+        },
+        {
+            "type": "pwa-msedge",
+            "name": "Launch Microsoft Edge in headless mode",
+            "request": "launch",
+            "runtimeArgs": [
+                "--headless",
+                "--remote-debugging-port=9222"
+            ],
+            "url": "http://localhost:8080",
+            "webRoot": "${workspaceFolder}/front-page",
+            "presentation": {
+                "hidden": true
+            },
+            "preLaunchTask": "Serve Developer Web Package"
+        },
+        {
+            "type": "vscode-edge-devtools.debug",
+            "name": "Open Edge DevTools",
+            "request": "attach",
+            "url": "http://localhost:8080",
+            "webRoot": "${workspaceFolder}/front-page",
+            "presentation": {
+                "hidden": true
+            }
         },
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Serve Release Web Package (simple-http-server)",
+            "name": "Serve Release Web Package",
             "program": "~/.cargo/bin/simple-http-server",
-            "args": ["--nocache", "-i", "-p", "8080", "--ip", "127.0.0.1", "${workspaceFolder}/target/web-dist"],
+            "args": [
+                "--nocache",
+                "-i",
+                "-p",
+                "8080",
+                "--ip",
+                "127.0.0.1",
+                "${workspaceFolder}/target/web-dist"
+            ],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "Prepare Serve Web Pakage"
         },
@@ -55,8 +94,26 @@
                     "kind": "bin"
                 }
             },
-            "args": ["build-web-dist"],
+            "args": [
+                "build-web-dist"
+            ],
             "cwd": "${workspaceFolder}"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Launch Edge Headless and attach DevTools",
+            "configurations": [
+                "Launch Microsoft Edge in headless mode",
+                "Open Edge DevTools"
+            ]
+        },
+        {
+            "name": "Launch Edge and attach DevTools",
+            "configurations": [
+                "Launch Microsoft Edge",
+                "Open Edge DevTools"
+            ]
         }
     ]
 }
