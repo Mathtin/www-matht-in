@@ -15,8 +15,7 @@
             "webRoot": "${workspaceFolder}/front-page",
             "presentation": {
                 "hidden": true
-            },
-            "preLaunchTask": "Serve Developer Web Package"
+            }
         },
         {
             "type": "pwa-msedge",
@@ -30,8 +29,7 @@
             "webRoot": "${workspaceFolder}/front-page",
             "presentation": {
                 "hidden": true
-            },
-            "preLaunchTask": "Serve Developer Web Package"
+            }
         },
         {
             "type": "vscode-edge-devtools.debug",
