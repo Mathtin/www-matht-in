@@ -189,8 +189,8 @@ button.addEventListener("click", function () {
     import("./shards_browser.js")
         .then(module => module.default().then(() => module))
         .then(module => {
-            wasm_status.textContent = "Click to open shards browser";
             button.addEventListener("click", module.start);
+            wasm_status.textContent = "Click to open shards browser";
         }).catch(err => {
             console.error('Failed to load module:', err);
         });
