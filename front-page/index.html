@@ -10,6 +10,10 @@
         <link rel="icon" type="img/ico" href="/favicon.ico">
         <style>
 
+/******************************************************************************
+    CSS
+******************************************************************************/
+
 @font-face {
     font-family: "Swansea";
     src: local('Swansea'), url("fonts/Swansea.woff2") format("woff2");
@@ -148,13 +152,17 @@ a:hover {
     }
 }
 
+/******************************************************************************
+    CSS END
+******************************************************************************/
+
         </style>
     </head>
     <body>
         <div class="container">
             <div class="upper box" id="modules-status">
                 <div id="js-status">JavaScript not loaded</div>
-                <div id="wasm-status">WebAssembly not loaded</div>
+                <div id="wasm-status">Click to load shards browser</div>
             </div>
             <div class="middle box" id="content-title">
                 <span>MATHT<span id="pre-i-dot">.</span>IN</span>
@@ -164,15 +172,33 @@ a:hover {
             </div>
         </div>
         <script>
-            document.getElementById("js-status").setAttribute("style", "visibility: hidden");
-        </script>
-        <script type="module">
-            import init, { start } from "./shards_browser.js";
 
-            init().then(() => {
-                document.getElementById("wasm-status").setAttribute("style", "visibility: hidden");
-                document.getElementById("content-title").onclick = start;
-            });
+//*****************************************************************************
+//   JavaScript
+//*****************************************************************************
+
+document.getElementById("js-status").setAttribute("style", "visibility: hidden");
+
+let button = document.getElementById("content-title");
+let wasm_status = document.getElementById("wasm-status");
+
+// Attach js on button click
+button.addEventListener("click", function () {
+    wasm_status.textContent = "loading...";
+    import("./shards_browser.js")
+        .then(module => module.default().then(() => module))
+        .then(module => {
+            wasm_status.textContent = "Click to open shards browser";
+            button.addEventListener("click", module.start);
+        }).catch(err => {
+            console.error('Failed to load module:', err);
+        });
+}, { once: true });
+
+//*****************************************************************************
+//  JavaScript END
+//*****************************************************************************
+
         </script>
     </body>
 </html>
