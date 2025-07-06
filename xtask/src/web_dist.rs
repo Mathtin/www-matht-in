@@ -287,9 +287,9 @@ fn minify(full_input: &Path, full_output: &Path) -> TaskResult {
             "--do-not-minify-doctype",
             "--ensure-spec-compliant-unquoted-attribute-values",
             "--minify-css-level-1",
-            "-o", 
-            full_output, 
-            full_input
+            "-o",
+            full_output,
+            full_input,
         ],
         &[],
     )

@@ -29,12 +29,11 @@ pub fn start() {
     start_impl()
 }
 
-
 #[cfg(test)]
 mod tests {
 
     use super::*;
-    use web_time::{Instant, Duration};
+    use web_time::{Duration, Instant};
 
     const MAX_START_WARN_SECS: u64 = 4;
     const MAX_START_SECS: u64 = 16;
@@ -44,18 +43,24 @@ mod tests {
     fn it_starts_quick_enough() {
         timed_start_one_pass();
 
-        const MAX_SECOND_START_DURATION: Duration = Duration::from_millis(MAX_SECOND_START_MS);
+        const MAX_SECOND_START_DURATION: Duration =
+            Duration::from_millis(MAX_SECOND_START_MS);
 
         let second_pass_duration = timed_start_one_pass();
 
-        assert!(second_pass_duration < MAX_SECOND_START_DURATION, "Slow second start (should be effectively empty)!");
+        assert!(
+            second_pass_duration < MAX_SECOND_START_DURATION,
+            "Slow second start (should be effectively empty)!"
+        );
     }
 
     fn timed_start_one_pass() -> Duration {
-        let h  = std::thread::spawn(start);
+        let h = std::thread::spawn(start);
 
-        const CHECK_SLEEP_DURATION: Duration = Duration::from_millis(MAX_SECOND_START_MS / 2);
-        const MAX_DURATION_ALERT: Duration = Duration::from_secs(MAX_START_WARN_SECS);
+        const CHECK_SLEEP_DURATION: Duration =
+            Duration::from_millis(MAX_SECOND_START_MS / 2);
+        const MAX_DURATION_ALERT: Duration =
+            Duration::from_secs(MAX_START_WARN_SECS);
         const MAX_DURATION: Duration = Duration::from_secs(MAX_START_SECS);
 
         assert!(MAX_DURATION_ALERT < MAX_DURATION);
