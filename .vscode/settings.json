@@ -5,6 +5,7 @@
         "cdylib",
         "codegen",
         "Ctarget",
+        "Dependi",
         "egui",
         "LLDB",
         "MATHT",

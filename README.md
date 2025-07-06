@@ -53,6 +53,7 @@ If you planning to run all tests - adjust threads count in `.vscode/tasks.json` 
 List of plugins for optimal developing experience:
 
 * [Even Better TOML](https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml) for rust development (toml support)
+* [Dependi](https://marketplace.visualstudio.com/items?itemName=fill-labs.dependi) for rust development (check crate versions)
 * [Code Spell Checker](https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker) for spell checking
 * [HTML CSS Support](https://marketplace.visualstudio.com/items?itemName=ecmel.vscode-html-css) for HTML/CSS development
 * [WebAssembly](https://marketplace.visualstudio.com/items?itemName=dtsvet.vscode-wasm) to be able to inspect wasm files
