@@ -284,9 +284,8 @@ fn minify(full_input: &Path, full_output: &Path) -> TaskResult {
     shell_log_piped(
         "minhtml",
         &[
-            "--do-not-minify-doctype",
-            "--ensure-spec-compliant-unquoted-attribute-values",
-            "--minify-css-level-1",
+            "--minify-js",
+            "--minify-css",
             "-o",
             full_output,
             full_input,
