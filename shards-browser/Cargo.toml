@@ -22,7 +22,7 @@ winit = { version = "0.30.11", features = ["android-native-activity"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # Native Immediate GUI
-egui-winit = "0.31.1"
+egui-winit = "0.32.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 # Web Platform Immediate GUI
