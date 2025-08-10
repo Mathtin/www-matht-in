@@ -15,24 +15,27 @@
 ******************************************************************************/
 
 @font-face {
-    font-family: "Swansea";
-    src: local('Swansea'), url("/fonts/Swansea.woff2") format("woff2");
+    font-family: "TexgyreadventorRegular";
+    src: local('TexgyreadventorRegular'), url("/fonts/TexgyreadventorRegular.otf") format("opentype");
 }
 
 body {
-    margin: 0;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
     background-color: black;
     color: transparent;
-    font-family: "Swansea", sans-serif;
+    display: flex;
+    font-family: "TexgyreadventorRegular", sans-serif;
+    height: 100vh;
+    justify-content: center;
+    margin: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    cursor: default;
 }
 
 a {
+    color: inherit;
     cursor: pointer;
     text-decoration: none;
-    color: inherit;
 }
 
 a:hover {
@@ -43,6 +46,9 @@ a:hover {
     display: flex;
     flex-direction: column;
     height: 100%;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
 }
 
 .container:hover {
@@ -50,10 +56,10 @@ a:hover {
 }
 
 .box {
-    padding: 3mm;
-    margin: 0;
     display: flex;
     flex-direction: column;
+    margin: 0;
+    padding: 3mm;
 }
 
 .upper {
@@ -72,17 +78,16 @@ a:hover {
 }
 
 #content-title {
-    border: 2.5mm #ebebeb solid;
-    color: #ebebeb;
-    font-size: 40mm;
+    border: 2.5mm #cccccc solid;
+    color: #cccccc;
     cursor: pointer;
-    -webkit-user-select: none;
-    user-select: none;
+    font-size: 40mm;
+    transition: all 0.4s ease;
 }
 
 #content-title:hover {
-    border-color: #bebebe;
-    color: #bebebe;
+    border-color: #afafaf;
+    color: #afafaf;
 }
 
 #content-title:active {
@@ -96,36 +101,49 @@ a:hover {
 }
 
 #content-text {
-    font-size: 10mm;
     color: #ebebeb;
+    font-size: 9mm;
+    -webkit-user-select: all; /* Safari */
+    -ms-user-select: all; /* IE 10 and IE 11 */
+    user-select: all; /* Standard syntax */
 }
 
-#pre-i-dot {
+#that-t {
+    position: relative;
+}
+
+#in-t-dot {
+    left: 59%;
     position: absolute;
-    left: calc(50% + 39mm);
+}
+
+#wasm-status {
+    visibility: hidden;
+}
+
+#shards-screen {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    z-index: -1;
 }
 
 @media (max-width:599px) {
     .box {
-        padding: 1.3mm;
+        padding: 2mm;
     }
 
     #content-title {
-        border-width: 1mm;
-        font-size: 16mm;
+        border-width: 2mm;
+        font-size: 22mm;
     }
 
     #modules-status {
-        font-size: 4mm;
-    }
-
-    #content-text {
         font-size: 6mm;
     }
 
-    #pre-i-dot {
-        position: absolute;
-        left: calc(50% + 15.5mm);
+    #content-text {
+        font-size: 7mm;
     }
 }
 
@@ -140,16 +158,11 @@ a:hover {
     }
 
     #modules-status {
-        font-size: 5mm;
+        font-size: 6mm;
     }
 
     #content-text {
         font-size: 7mm;
-    }
-
-    #pre-i-dot {
-        position: absolute;
-        left: calc(50% + 27mm);
     }
 }
 
@@ -160,13 +173,14 @@ a:hover {
         </style>
     </head>
     <body>
+        <canvas id="shards-screen"></canvas>
         <div class="container">
             <div class="upper box" id="modules-status">
                 <div id="js-status">JavaScript not loaded</div>
                 <div id="wasm-status">Click to load shards browser</div>
             </div>
             <div class="middle box" id="content-title">
-                <span>MATHT<span id="pre-i-dot">.</span>IN</span>
+                <span id="matht-dot-in">MATH<span id="that-t">T<span id="in-t-dot">.</span></span>IN</span>
             </div>
             <div class="lower box" id="content-text">
                 <span>contact <a id="mailto" href="mailto:me@matht.in">me@matht.in</a></span>
@@ -179,6 +193,7 @@ a:hover {
 //*****************************************************************************
 
 document.getElementById("js-status").setAttribute("style", "visibility: hidden");
+document.getElementById("wasm-status").setAttribute("style", "visibility: visible");
 
 let button = document.getElementById("content-title");
 let wasm_status = document.getElementById("wasm-status");
