@@ -17,7 +17,7 @@ log = { package = "shards-logger", path = "../shards-logger" }
 egui = "0.31.1"
 egui-wgpu = { version = "0.31.1", features = ["winit"] }
 # Basic Graphics Stack
-wgpu = { version = "24.0.5", default-features = false }
+wgpu = { version = "26.0.1", default-features = false }
 winit = { version = "0.30.11", features = ["android-native-activity"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
