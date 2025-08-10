@@ -23,4 +23,4 @@ jobs:
       - name: Build web
         run: cargo xtask build-web-dist
       - name: Copy folder to where nginx expects it to be
-        run: rsync --delete ${{secrets.COPY_FROM_FOLDER}} ${{secrets.COPY_TO_FOLDER}}
+        run: rsync -vr --delete ${{secrets.COPY_FROM_FOLDER}} ${{secrets.COPY_TO_FOLDER}}
