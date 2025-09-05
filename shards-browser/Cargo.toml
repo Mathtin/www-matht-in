@@ -26,7 +26,7 @@ egui-winit = "0.32.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 # Web Platform Immediate GUI
-egui-winit = { version = "0.31.1", default-features = false }
+egui-winit = { version = "0.32.2", default-features = false }
 # Web API Bindings
 wasm-bindgen = "0.2.100"
 wasm-bindgen-futures = "0.4.50"
