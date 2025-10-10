@@ -15,7 +15,7 @@ crate-type = ["cdylib", "rlib"]
 log = { package = "shards-logger", path = "../shards-logger" }
 # Basic Immediate GUI
 egui = "0.32.1"
-egui-wgpu = { version = "0.32.0", features = ["winit"] }
+egui-wgpu = { version = "0.33.0", features = ["winit"] }
 # Basic Graphics Stack
 wgpu = { version = "26.0.1", default-features = false }
 winit = { version = "0.30.11", features = ["android-native-activity"] }
