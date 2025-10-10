@@ -22,11 +22,11 @@ winit = { version = "0.30.11", features = ["android-native-activity"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # Native Immediate GUI
-egui-winit = "0.32.0"
+egui-winit = "0.33.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 # Web Platform Immediate GUI
-egui-winit = { version = "0.31.1", default-features = false }
+egui-winit = { version = "0.33.0", default-features = false }
 # Web API Bindings
 wasm-bindgen = "0.2.100"
 wasm-bindgen-futures = "0.4.50"
